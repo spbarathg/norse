@@ -14,10 +14,10 @@ try {
 const eras: any[] = require("../config/eras.json");
 
 const RARITY_WEIGHTS: Record<string, number> = {
-  S: 0.02,
-  A: 0.1,
-  B: 0.28,
-  C: 0.6,
+  S: 0.005,  // 0.5% (1 in 200) - Ultra Legendary
+  A: 0.025,  // 2.5% (1 in 40) - Legendary  
+  B: 0.17,   // 17% - Rare
+  C: 0.8,    // 80% - Common
 };
 
 const DropInput = z.object({
