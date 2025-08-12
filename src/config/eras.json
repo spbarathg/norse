@@ -1,0 +1,12 @@
+[
+  {
+    "id": "first_dawn",
+    "name": "First Dawn",
+    "startIgTs": "Y1:M1:D1:H0",
+    "endIgTs": null,
+    "visualId": "crest_first_dawn",
+    "decayModifier": 1.0,
+    "evoCeilingModifier": 1.0,
+    "specialFlags": ""
+  }
+] 

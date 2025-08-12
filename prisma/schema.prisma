@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Era {
+  id                   String  @id
+  name                 String
+  startIgTs            String
+  endIgTs              String?
+  visualId             String
+  decayModifier        Float   @default(1)
+  evoCeilingModifier   Float   @default(1)
+  specialFlags         String?
+
+  relics               Relic[]
+}
+
+model Relic {
+  id                 String   @id @default(uuid())
+  characterId        Int
+  ownerUserId        String
+  originUserId       String
+  eraId              String
+  birthIgTs          String
+  birthRealTs        DateTime @default(now())
+  durabilityPct      Float    @default(100)
+  evolutionStage     String   @default("Dormant")
+  currentStats       Json
+  isShadowborn       Boolean  @default(false)
+  rebirthIgTs        String?
+  history            Json     @default("[]")
+  lastDecayTick      DateTime?
+  preservationExpiry DateTime?
+  metadata           Json?
+
+  era                Era      @relation(fields: [eraId], references: [id])
+
+  @@index([ownerUserId])
+  @@index([durabilityPct])
+}
+
+model User {
+  userId     String  @id
+  discordId  String  @unique
+  gold       Int     @default(0)
+  materials  Json    @default("{}")
+}
+
+model Mission {
+  id             String    @id @default(cuid())
+  ownerUserId    String
+  relicIds       String[]
+  missionType    String
+  startRealTs    DateTime  @default(now())
+  endRealTs      DateTime
+  rewardPayload  Json
+  status         String
+
+  @@index([ownerUserId])
+  @@index([status])
+}
+
+model MarketListing {
+  id          String   @id @default(cuid())
+  sellerUserId String
+  relicId     String   @unique
+  priceGold   Int
+  createdTs   DateTime @default(now())
+  status      String
+  viewCount   Int      @default(0)
+
+  @@index([status])
+}
+
+model Event {
+  id            String   @id @default(cuid())
+  type          String
+  payload       Json
+  scheduledIgTs String
+  status        String
+} 

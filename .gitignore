@@ -1,0 +1,58 @@
+# Node
+node_modules/
+
+# Build outputs
+dist/
+build/
+.tmp/
+tmp/
+temp/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Caches
+.cache/
+.eslintcache
+
+# Prisma
+# Keep schema and migrations; ignore any local prisma env
+prisma/.env
+
+# Redis/AOF local dumps
+*.rdb
+appendonly.aof
+
+# PIDs
+*.pid
+*.seed
+
+# Local CDN generated artifacts (optional)
+# public/cdn/ 
