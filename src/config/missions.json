@@ -1,0 +1,26 @@
+[
+  {
+    "id": "scout_grove",
+    "name": "Scout the Grove",
+    "durationSec": 600,
+    "xpReward": 5,
+    "decayReduction": 0.2,
+    "rewardTable": {"goldMin": 10, "goldMax": 20, "materials": {"wood": [1,3]}}
+  },
+  {
+    "id": "raid_ruins",
+    "name": "Raid Ancient Ruins",
+    "durationSec": 1800,
+    "xpReward": 15,
+    "decayReduction": 0.3,
+    "rewardTable": {"goldMin": 35, "goldMax": 60, "materials": {"metal": [1,2], "stone": [2,4]}}
+  },
+  {
+    "id": "ocean_voyage",
+    "name": "Ocean Voyage",
+    "durationSec": 3600,
+    "xpReward": 30,
+    "decayReduction": 0.5,
+    "rewardTable": {"goldMin": 60, "goldMax": 120, "materials": {"pearls": [0,1], "wood": [2,4]}}
+  }
+] 

@@ -69,17 +69,20 @@ export async function performDrop(input: DropInput): Promise<DropResult> {
     spd: character.spd,
   };
 
+  const history = [
+    { ts: new Date().toISOString(), event: "dropped", details: { eraId: currentEra.id } },
+  ];
+
   const relic = await prisma.relic.create({
     data: {
       characterId: character.id,
       ownerUserId: userId,
       originUserId: userId,
       eraId: currentEra.id,
+      rarity: character.rarity,
       birthIgTs: igTs,
-      currentStats,
-      history: [
-        { ts: new Date().toISOString(), event: "dropped", details: { eraId: currentEra.id } },
-      ],
+      currentStats: JSON.stringify(currentStats),
+      history: JSON.stringify(history),
     },
   });
 

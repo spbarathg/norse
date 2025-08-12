@@ -1,5 +1,6 @@
-import { Client, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from "discord.js";
+import { Client, GatewayIntentBits, REST, Routes } from "discord.js";
 import { performDrop } from "../engines/drop.js";
+import { commandBuilders, handleCommand } from "./commands.js";
 
 export function createClient() {
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -10,12 +11,7 @@ export function createClient() {
 
   client.on("interactionCreate", async (interaction) => {
     if (!interaction.isChatInputCommand()) return;
-    if (interaction.commandName === "drop") {
-      await interaction.deferReply();
-      const userId = interaction.user.id;
-      const result = await performDrop({ userId });
-      await interaction.editReply({ embeds: [result.embed] });
-    }
+    await handleCommand(interaction);
   });
 
   return client;
@@ -26,9 +22,7 @@ export async function registerGuildCommands() {
   const clientId = process.env.DISCORD_CLIENT_ID!;
   const guildId = process.env.DISCORD_GUILD_ID!;
 
-  const commands = [
-    new SlashCommandBuilder().setName("drop").setDescription("Summon a new Living Relic")
-  ].map((c) => c.toJSON());
+  const commands = commandBuilders.map((c) => c.toJSON());
 
   const rest = new REST({ version: "10" }).setToken(token);
   await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });

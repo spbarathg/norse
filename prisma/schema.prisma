@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -26,53 +26,63 @@ model Relic {
   ownerUserId        String
   originUserId       String
   eraId              String
+  rarity             String
   birthIgTs          String
   birthRealTs        DateTime @default(now())
   durabilityPct      Float    @default(100)
+  xp                 Int      @default(0)
   evolutionStage     String   @default("Dormant")
-  currentStats       Json
+  currentStats       String   // JSON as String for SQLite
   isShadowborn       Boolean  @default(false)
   rebirthIgTs        String?
-  history            Json     @default("[]")
-  lastDecayTick      DateTime?
+  history            String   @default("[]") // JSON as String for SQLite
+  lastDecayTick      DateTime @default(now())
   preservationExpiry DateTime?
-  metadata           Json?
+  metadata           String? // JSON as String for SQLite
+  isLocked           Boolean  @default(false)
+  missionLockId      String?
 
   era                Era      @relation(fields: [eraId], references: [id])
 
   @@index([ownerUserId])
   @@index([durabilityPct])
+  @@index([eraId])
+  @@index([rarity])
 }
 
 model User {
   userId     String  @id
   discordId  String  @unique
   gold       Int     @default(0)
-  materials  Json    @default("{}")
+  materials  String  @default("{}") // JSON as String for SQLite
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Mission {
   id             String    @id @default(cuid())
   ownerUserId    String
-  relicIds       String[]
+  relicIds       String    // JSON array as String for SQLite
   missionType    String
   startRealTs    DateTime  @default(now())
   endRealTs      DateTime
-  rewardPayload  Json
-  status         String
+  rewardPayload  String    // JSON as String for SQLite
+  status         String     @default("active") // active | ready | claimed | canceled
+  claimedAt      DateTime?
 
   @@index([ownerUserId])
   @@index([status])
 }
 
 model MarketListing {
-  id          String   @id @default(cuid())
+  id           String   @id @default(cuid())
   sellerUserId String
-  relicId     String   @unique
-  priceGold   Int
-  createdTs   DateTime @default(now())
-  status      String
-  viewCount   Int      @default(0)
+  buyerUserId  String?
+  relicId      String   @unique
+  priceGold    Int
+  createdTs    DateTime @default(now())
+  status       String   @default("active") // active | sold | canceled
+  viewCount    Int      @default(0)
 
   @@index([status])
 }
@@ -80,7 +90,7 @@ model MarketListing {
 model Event {
   id            String   @id @default(cuid())
   type          String
-  payload       Json
+  payload       String   // JSON as String for SQLite
   scheduledIgTs String
   status        String
 } 
