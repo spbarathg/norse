@@ -2,6 +2,7 @@ import seedrandom from "seedrandom";
 import { z } from "zod";
 import { getPrisma } from "../lib/db.js";
 import { getCurrentInGameTimestamp } from "./time.js";
+import { generateRelicId } from "../lib/relicId.js";
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
@@ -73,8 +74,12 @@ export async function performDrop(input: DropInput): Promise<DropResult> {
     { ts: new Date().toISOString(), event: "dropped", details: { eraId: currentEra.id } },
   ];
 
+  // Generate premium relic ID
+  const relicId = await generateRelicId(currentEra.id, character.slug);
+
   const relic = await prisma.relic.create({
     data: {
+      id: relicId,
       characterId: character.id,
       ownerUserId: userId,
       originUserId: userId,

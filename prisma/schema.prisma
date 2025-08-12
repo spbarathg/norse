@@ -21,7 +21,7 @@ model Era {
 }
 
 model Relic {
-  id                 String   @id @default(uuid())
+  id                 String   @id
   characterId        Int
   ownerUserId        String
   originUserId       String

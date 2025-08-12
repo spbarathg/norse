@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits, REST, Routes } from "discord.js";
 import { performDrop } from "../engines/drop.js";
-import { commandBuilders, handleCommand } from "./commands.js";
+import { commandBuilders, handleCommand, handleComponentInteraction } from "./commands.js";
 
 export function createClient() {
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -11,12 +11,18 @@ export function createClient() {
 
   client.on("interactionCreate", async (interaction) => {
     console.log("Interaction received:", interaction.type, interaction.isCommand?.() ? interaction.commandName : "not a command");
-    if (!interaction.isChatInputCommand()) {
-      console.log("Not a chat input command, ignoring");
+    
+    if (interaction.isChatInputCommand()) {
+      console.log("Processing chat input command:", interaction.commandName);
+      await handleCommand(interaction);
       return;
     }
-    console.log("Processing chat input command:", interaction.commandName);
-    await handleCommand(interaction);
+
+    if (interaction.isButton() || interaction.isStringSelectMenu()) {
+      console.log("Processing component interaction:", interaction.customId);
+      await handleComponentInteraction(interaction);
+      return;
+    }
   });
 
   return client;
