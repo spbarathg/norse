@@ -1,97 +1,50 @@
 import { getPrisma } from "./db.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
-/**
- * Generate a premium relic ID in the format: <era><character><suffix>
- * Example: E3ZE7H9 (Era 3, Zeus, suffix 7H9)
- */
-export async function generateRelicId(eraId: string, characterSlug: string): Promise<string> {
-  const prisma = getPrisma();
-  
-  // Extract era number from eraId (e.g., "first_dawn" -> 1)
-  const eraNumber = getEraNumber(eraId);
-  const eraPrefix = `E${eraNumber}`;
-  
-  // Get first two letters of character slug in uppercase
-  const characterPrefix = characterSlug.substring(0, 2).toUpperCase();
-  
-  // Generate unique suffix with retry logic
-  let attempts = 0;
-  const maxAttempts = 100; // Prevent infinite loops
-  
-  while (attempts < maxAttempts) {
-    const suffix = generateRandomSuffix();
-    const relicId = `${eraPrefix}${characterPrefix}${suffix}`;
-    
-    // Check if this ID already exists
-    const existing = await prisma.relic.findUnique({ where: { id: relicId } });
-    
-    if (!existing) {
-      return relicId;
-    }
-    
-    attempts++;
-  }
-  
-  // Fallback: if we can't generate a unique ID, use a timestamp-based approach
-  const timestamp = Date.now().toString(36).substring(-3).toUpperCase();
-  return `${eraPrefix}${characterPrefix}${timestamp}`;
-}
+const eras = require("../config/eras.json");
+const characters = require("../../data/allgodschars.json");
 
-/**
- * Generate a random 3-character alphanumeric suffix (0-9, A-Z)
- */
-function generateRandomSuffix(): string {
-  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-  
-  for (let i = 0; i < 3; i++) {
+function generateRandomSuffix(length: number): string {
+  const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let result = "";
+  for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  
   return result;
 }
 
-/**
- * Map era IDs to numbers
- */
-function getEraNumber(eraId: string): number {
-  const eraMap: Record<string, number> = {
-    'first_dawn': 1,
-    'golden_age': 2,
-    'twilight_war': 3,
-    'shadow_reign': 4,
-    'new_beginning': 5,
-    // Add more eras as needed
-  };
-  
-  return eraMap[eraId] || 1; // Default to era 1 if unknown
+export async function generateRelicId(eraId: string, characterSlug: string): Promise<string> {
+  const era = eras.find((e: any) => e.id === eraId);
+  if (!era) throw new Error("Era not found");
+
+  const eraNumber = eras.indexOf(era) + 1;
+  const charCode = characterSlug.substring(0, 2).toUpperCase();
+
+  let newId: string;
+  let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 10; // Prevent infinite loops
+
+  const prisma = getPrisma();
+
+  while (!isUnique && attempts < maxAttempts) {
+    const suffix = generateRandomSuffix(3);
+    newId = `E${eraNumber}${charCode}${suffix}`;
+    const existingRelic = await prisma.relic.findUnique({ where: { id: newId } });
+    if (!existingRelic) {
+      isUnique = true;
+    }
+    attempts++;
+  }
+
+  if (!isUnique) {
+    throw new Error("Failed to generate a unique relic ID after multiple attempts.");
+  }
+  return newId!;
 }
 
-/**
- * Validate if a string is a valid relic ID format
- */
 export function isValidRelicId(id: string): boolean {
-  // Format: E[number][2letters][3alphanumeric]
-  const pattern = /^E\d+[A-Z]{2}[A-Z0-9]{3}$/;
-  return pattern.test(id);
-}
-
-/**
- * Parse a relic ID to extract components
- */
-export function parseRelicId(id: string): { era: number; character: string; suffix: string } | null {
-  if (!isValidRelicId(id)) {
-    return null;
-  }
-  
-  const match = id.match(/^E(\d+)([A-Z]{2})([A-Z0-9]{3})$/);
-  if (!match) {
-    return null;
-  }
-  
-  return {
-    era: parseInt(match[1]),
-    character: match[2],
-    suffix: match[3]
-  };
+  const regex = /^E\d{1,2}[A-Z]{2}[0-9A-Z]{3}$/;
+  return regex.test(id);
 }

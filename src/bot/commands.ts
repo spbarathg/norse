@@ -341,7 +341,7 @@ function getRarityColor(rarity: string): number {
 // Interactive collection display with pagination
 async function showCollectionPage(interaction: ChatInputCommandInteraction, userId: string, page: number) {
   const prisma = getPrisma();
-  const pageSize = 6;
+  const pageSize = 4;
   const skip = (page - 1) * pageSize;
   
   const [relics, totalCount] = await Promise.all([
@@ -373,14 +373,19 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction, user
     .setColor(0x3498DB)
     .setTimestamp();
 
-  // Add relic fields with premium styling and better spacing
+  // Add relic fields in vertical format with spacing
   relics.forEach((relic, index) => {
     const rarityEmoji = getRarityEmoji(relic.rarity);
     embed.addFields({
-      name: `${rarityEmoji} \`${relic.id}\``,
-      value: `**${getRarityName(relic.rarity)}** • **${relic.durabilityPct.toFixed(1)}%** HP\n**${relic.evolutionStage}** • **${relic.xp.toLocaleString()}** XP`,
-      inline: true
+      name: `${rarityEmoji} **\`${relic.id}\`**`,
+      value: `${getRarityName(relic.rarity)} • ${relic.durabilityPct.toFixed(1)}% HP • ${relic.evolutionStage} • ${relic.xp.toLocaleString()} XP`,
+      inline: false
     });
+
+    // Add spacing between relics (except after the last one)
+    if (index < relics.length - 1) {
+      embed.addFields({ name: "⠀", value: "⠀", inline: false });
+    }
   });
 
   // Navigation buttons
@@ -545,7 +550,7 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         // Get target user info
         const targetUser = await interaction.client.users.fetch(targetUserId);
         
-        await interaction.deferReply(); // PUBLIC - everyone can see
+        await interaction.deferUpdate(); // Keep same message
         await showPlayerCollection(interaction, targetUserId, targetUser.username, page);
         return;
       }
@@ -821,7 +826,7 @@ async function handleDailyReward(interaction: ChatInputCommandInteraction, userI
 async function showPlayerCollection(interaction: ChatInputCommandInteraction, targetUserId: string, targetUsername: string, page: number) {
   console.log(`showPlayerCollection called for user ${targetUserId} (${targetUsername}), page ${page}`);
   const prisma = getPrisma();
-  const pageSize = 6;
+  const pageSize = 4;
   const skip = (page - 1) * pageSize;
   
   const [relics, totalCount] = await Promise.all([
@@ -853,18 +858,57 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction, ta
     .setColor(0x9B59B6)
     .setTimestamp();
 
-  // Add relic fields
-  relics.forEach((relic) => {
+  // Add relic fields in vertical format with spacing
+  relics.forEach((relic, index) => {
     const rarityEmoji = getRarityEmoji(relic.rarity);
     embed.addFields({
-      name: `${rarityEmoji} \`${relic.id}\``,
-      value: `**${getRarityName(relic.rarity)}** • **${relic.durabilityPct.toFixed(1)}%** HP\n**${relic.evolutionStage}** • **${relic.xp.toLocaleString()}** XP`,
-      inline: true
+      name: `${rarityEmoji} **\`${relic.id}\`**`,
+      value: `${getRarityName(relic.rarity)} • ${relic.durabilityPct.toFixed(1)}% HP • ${relic.evolutionStage} • ${relic.xp.toLocaleString()} XP`,
+      inline: false
     });
+
+    // Add spacing between relics (except after the last one)
+    if (index < relics.length - 1) {
+      embed.addFields({ name: "⠀", value: "⠀", inline: false });
+    }
   });
 
+  // Navigation buttons for player collection
+  const components = [];
+  const navigationRow = new ActionRowBuilder<ButtonBuilder>();
+  
+  if (page > 1) {
+    navigationRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`inspect_${targetUserId}_${page - 1}`)
+        .setLabel('⬅️ Previous')
+        .setStyle(ButtonStyle.Secondary)
+    );
+  }
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`inspect_${targetUserId}_${page}`)
+      .setLabel('🔄 Refresh')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  if (page < totalPages) {
+    navigationRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`inspect_${targetUserId}_${page + 1}`)
+        .setLabel('Next ➡️')
+        .setStyle(ButtonStyle.Secondary)
+    );
+  }
+
+  if (navigationRow.components.length > 0) {
+    components.push(navigationRow);
+  }
+
   await interaction.editReply({ 
-    embeds: [embed]
+    embeds: [embed],
+    components 
   });
 }
 
