@@ -10,7 +10,12 @@ export function createClient() {
   });
 
   client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
+    console.log("Interaction received:", interaction.type, interaction.isCommand?.() ? interaction.commandName : "not a command");
+    if (!interaction.isChatInputCommand()) {
+      console.log("Not a chat input command, ignoring");
+      return;
+    }
+    console.log("Processing chat input command:", interaction.commandName);
     await handleCommand(interaction);
   });
 
@@ -27,4 +32,15 @@ export async function registerGuildCommands() {
   const rest = new REST({ version: "10" }).setToken(token);
   await rest.put(Routes.applicationGuildCommands(clientId, guildId), { body: commands });
   console.log("Registered guild commands.");
+}
+
+export async function registerGlobalCommands() {
+  const token = process.env.DISCORD_TOKEN!;
+  const clientId = process.env.DISCORD_CLIENT_ID!;
+
+  const commands = commandBuilders.map((c) => c.toJSON());
+
+  const rest = new REST({ version: "10" }).setToken(token);
+  await rest.put(Routes.applicationCommands(clientId), { body: commands });
+  console.log("Registered global commands.");
 } 

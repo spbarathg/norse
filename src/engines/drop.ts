@@ -86,18 +86,23 @@ export async function performDrop(input: DropInput): Promise<DropResult> {
     },
   });
 
-  const imageUrl = `${process.env.CDN_BASE_URL || ""}/portraits/${character.slug}.png`;
+  const baseUrl = process.env.CDN_BASE_URL || "http://localhost:3000/cdn";
+  const imageUrl = `${baseUrl}/portraits/${character.slug}.png`;
 
   const embed = {
     title: `${character.name} — ${rarity} Relic` ,
     description: `Era: ${currentEra.name} | Born: ${igTs}`,
-    image: { url: imageUrl },
     fields: [
       { name: "Class", value: character.class, inline: true },
       { name: "Element", value: character.element, inline: true },
       { name: "Passive", value: `"${character.passive_ability_name}" — ${character.passive_ability_desc}` },
     ],
   };
+
+  // Only add image if we have a proper URL
+  if (baseUrl && baseUrl !== "") {
+    embed.image = { url: imageUrl };
+  }
 
   return { relicId: relic.id, characterId: character.id, rarity, embed };
 } 

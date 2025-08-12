@@ -51,6 +51,8 @@ export const commandBuilders = [
 ];
 
 export async function handleCommand(interaction: ChatInputCommandInteraction) {
+  console.log(`Received command: ${interaction.commandName} from user: ${interaction.user.id}`);
+  
   const prisma = getPrisma();
   const userId = interaction.user.id;
 
@@ -156,12 +158,19 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       return;
     }
   } catch (error: any) {
-    console.error("Command error:", error);
-    const reply = `Error: ${error.message || "Something went wrong"}`;
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(reply);
-    } else {
-      await interaction.reply({ content: reply, ephemeral: true });
+    console.error(`Command error for ${interaction.commandName}:`, error);
+    console.error("Error stack:", error.stack);
+    
+    const reply = `Error executing command: ${error.message || "Something went wrong"}`;
+    
+    try {
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply(reply);
+      } else {
+        await interaction.reply({ content: reply, ephemeral: true });
+      }
+    } catch (replyError) {
+      console.error("Failed to send error reply:", replyError);
     }
   }
 } 
