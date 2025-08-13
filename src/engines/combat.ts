@@ -91,6 +91,8 @@ export type TurnEvent = {
   crit: boolean;
   defeatedTarget: boolean;
   description: string;
+  // Concise, human-readable log of what happened this turn (for UI)
+  log?: string;
   allies: Combatant[];
   enemies: Combatant[];
 };
@@ -193,6 +195,47 @@ function initializeBattleState(c: Combatant) {
       statusEffects: {}
     };
   }
+}
+
+// Smart target selection that accounts for taunt, positioning, and class heuristics
+function selectBattleTarget(actor: Combatant, allies: Combatant[], enemies: Combatant[]): Combatant | null {
+  const opponents = actor.side === 'ally' ? enemies : allies;
+  const livingOpponents = opponents.filter(c => c.currentHp > 0);
+  if (livingOpponents.length === 0) return null;
+
+  // 1) Taunt: must target any opponent with active taunt buff
+  const taunters = livingOpponents.filter(c => (c.buffs || []).some(b => b.kind === 'taunt' && (!b.expiresOnTurn || b.expiresOnTurn > 0)));
+  if (taunters.length > 0) return pickRandom(taunters);
+
+  // 2) Positioning: prefer front row targets if present
+  const frontOpponents = livingOpponents.filter(c => c.pos === 'FL' || c.pos === 'FR');
+  const backOpponents = livingOpponents.filter(c => c.pos === 'BL' || c.pos === 'BR');
+
+  // 3) Class-driven heuristics
+  const cls = (actor.className || '').toLowerCase();
+  const eligiblePrimary = frontOpponents.length > 0 ? frontOpponents : livingOpponents;
+  const eligibleSecondary = backOpponents.length > 0 ? backOpponents : livingOpponents;
+
+  // Rogue/Assassin: go for lowest HP% (often backline)
+  if (cls.includes('rogue') || cls.includes('assassin')) {
+    const sorted = [...eligibleSecondary].sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp));
+    return sorted[0] || pickRandom(livingOpponents);
+  }
+  // Mage: prefer lowest DEF (often backline)
+  if (cls.includes('mage')) {
+    const sorted = [...eligibleSecondary].sort((a, b) => a.def - b.def);
+    return sorted[0] || pickRandom(livingOpponents);
+  }
+  // Warrior: prefer front line highest threat (highest ATK among front)
+  if (cls.includes('warrior') || cls.includes('guardian') || cls.includes('tank')) {
+    const pool = eligiblePrimary.length > 0 ? eligiblePrimary : livingOpponents;
+    const sorted = [...pool].sort((a, b) => b.atk - a.atk);
+    return sorted[0] || pickRandom(livingOpponents);
+  }
+
+  // Default: random among front if possible, else any
+  if (frontOpponents.length > 0) return pickRandom(frontOpponents);
+  return pickRandom(livingOpponents);
 }
 
 function selectTarget(targetType: string, self: Combatant, allies: Combatant[], enemies: Combatant[], context?: any): Combatant | null {
@@ -370,7 +413,7 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
       if (actor.currentHp <= 0) continue; // actor died earlier in same round
       const opponents = actor.side === "ally" ? living(enemies) : living(allies);
       if (opponents.length === 0) break;
-      const target = pickRandom(opponents);
+      const target = selectBattleTarget(actor, allies, enemies) || pickRandom(opponents);
 
       // Turn-start effects (poison/bleed ticks on actor; sleep/stun skip)
       const skip = handleOnTurnStart(actor, turn, allies, enemies);
@@ -386,6 +429,7 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
           crit: false,
           defeatedTarget: false,
           description: `${actor.name} cannot act this turn.`,
+          log: `${actor.name} is incapacitated and skips the turn.`,
           allies: allies.map(cloneCombatant),
           enemies: enemies.map(cloneCombatant),
         });
@@ -401,7 +445,12 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
       const effectiveAtk = Math.round(actor.atk * Math.max(0.5, atkMult));
       const effectiveDef = Math.round(target.def * Math.max(0.5, defMult));
 
-      const base = Math.max(1, effectiveAtk - Math.floor(effectiveDef * 0.5));
+      // Positional mitigation: backline is slightly safer until frontline falls
+      const frontlineAlive = (actor.side === 'ally' ? enemies : allies).some(c => (c.pos === 'FL' || c.pos === 'FR') && c.currentHp > 0);
+      const targetIsBackline = target.pos === 'BL' || target.pos === 'BR';
+      const positionMitigation = frontlineAlive && targetIsBackline ? 0.9 : 1.0; // 10% mitigation for backline while frontline stands
+
+      const base = Math.max(1, Math.round((effectiveAtk - Math.floor(effectiveDef * 0.5)) * positionMitigation));
       const variance = 0.85 + Math.random() * 0.3; // ±15%
       let dmg = Math.max(1, Math.round(base * variance));
       
@@ -428,6 +477,7 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
 
       let defeatedTarget = target.currentHp <= 0;
       let description = `${actor.name} strikes ${target.name} for ${dmg} damage${crit ? " — CRITICAL!" : ""}${defeatedTarget ? " and defeats them!" : "."}`;
+      const conciseLog = `${actor.name} ➜ ${target.name}: ${dmg}${crit ? " crit" : ""}${defeatedTarget ? " (defeated)" : ""}`;
       
       // Handle cleave attacks
       if (hitResult.cleaveTargets.length > 0) {
@@ -470,6 +520,7 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
         crit,
         defeatedTarget,
         description,
+        log: conciseLog,
         allies: allies.map(cloneCombatant),
         enemies: enemies.map(cloneCombatant),
       });

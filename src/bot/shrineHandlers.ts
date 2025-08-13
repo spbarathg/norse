@@ -173,21 +173,21 @@ export async function handleShrineSetup(interaction: ChatInputCommandInteraction
     
   const alignmentInput = new TextInputBuilder()
     .setCustomId('alignment_input')
-    .setLabel('Pantheon Alignment (Norse/Greco-Roman)')
+    .setLabel('Pantheon Alignment')
     .setStyle(TextInputStyle.Short)
     .setPlaceholder('Enter: Norse or Greco-Roman')
     .setRequired(false);
     
   const effigyInput = new TextInputBuilder()
     .setCustomId('effigy_input')
-    .setLabel('Effigy ID (warriors_effigy, mages_effigy, etc.)')
+    .setLabel('Effigy ID (e.g., warriors_effigy)')
     .setStyle(TextInputStyle.Short)
     .setPlaceholder('Enter effigy ID or leave blank')
     .setRequired(false);
     
   const positionsInput = new TextInputBuilder()
     .setCustomId('positions_input')
-    .setLabel('Positions (FL:relicId,FR:relicId,BL:relicId,BR:relicId)')
+    .setLabel('Positions (FL/FR/BL/BR)')
     .setStyle(TextInputStyle.Paragraph)
     .setPlaceholder('Example: FL:abc123,FR:def456')
     .setRequired(false);
@@ -378,7 +378,7 @@ export async function handleShrineButtonInteraction(interaction: ButtonInteracti
           
         const effigyInput = new TextInputBuilder()
           .setCustomId('effigy_input')
-          .setLabel('Effigy (warriors_effigy, mages_effigy, etc.)')
+          .setLabel('Effigy (e.g., warriors_effigy)')
           .setStyle(TextInputStyle.Short)
           .setPlaceholder('warriors_effigy')
           .setRequired(false);

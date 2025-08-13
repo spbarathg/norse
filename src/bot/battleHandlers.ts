@@ -137,7 +137,7 @@ export async function handleBattleCommand(interaction: ChatInputCommandInteracti
     .setTitle("⚔️ Combat in Progress")
     .setColor(Colors.Purple)
     .setDescription(renderHpPanel(turns[0]?.allies || allies, turns[0]?.enemies || enemies))
-    .addFields({ name: "⚡ Current Action", value: "Battle begins...", inline: false })
+    .addFields({ name: "⚡ Current Action", value: turns[0]?.log || "Battle begins...", inline: false })
     .setFooter({ text: `Turn 1 of ${turns.length} | Click ACT to progress` });
 
   // Add ACT button for cinematic pacing
@@ -195,7 +195,7 @@ export async function handleBattleCommand(interaction: ChatInputCommandInteracti
       });
       
       // Show critical hit animation
-      if ((turn as any).wasCrit) {
+      if ((turn as any).crit) {
         const critUrl = getCritGifUrl();
         if (critUrl) stageEmbed.setImage(critUrl);
       } else {
@@ -339,7 +339,7 @@ async function showVictoryScreen(
   if (showDetailed) {
     const totalTurns = outcome.timeline.length;
     const totalDamage = [...allies, ...enemies].reduce((sum, c) => sum + (c.damageDealt || 0), 0);
-    const critCount = outcome.timeline.filter((t: any) => t.wasCrit).length;
+    const critCount = outcome.timeline.filter((t: any) => t.crit).length;
     
     victoryEmbed.addFields({
       name: "📊 Battle Statistics",

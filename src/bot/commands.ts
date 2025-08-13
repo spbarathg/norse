@@ -18,6 +18,9 @@ import {
   AutocompleteInteraction,
   Colors
 } from "discord.js";
+import path from "path";
+import fs from "fs";
+import { AttachmentBuilder } from "discord.js";
 import { performDrop } from "../engines/drop.js";
 import { startMission, claimMission } from "../engines/missions.js";
 import { getPrisma } from "../lib/db.js";
@@ -1481,6 +1484,31 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         return;
       }
 
+      // Character detail selection from lookup
+      if (customId === 'lookup_select') {
+        const isSelect = (interaction as any).isStringSelectMenu && (interaction as any).isStringSelectMenu();
+        const value = isSelect ? (interaction as any).values?.[0] : undefined;
+        if (value && value.startsWith('lookup_view_')) {
+          const slug = value.replace('lookup_view_', '');
+          // Edit the original reply in-place without deferring if possible
+          const embed = buildCharacterDetailsEmbed(slug);
+          await interaction.update({ embeds: [embed], components: [] });
+          return;
+        }
+      }
+
+      // Back to list from character details
+      if (customId === 'lookup_back') {
+        // Rebuild the last list view; try to retrieve stored context from the original interaction if present
+        await interaction.deferUpdate();
+        const msg: any = interaction.message;
+        const ctx = (interaction as any)._lookupCtx || (msg && (msg as any)._lookupCtx) || null;
+        const searchTerm = ctx?.searchTerm ?? null;
+        const page = ctx?.page ?? 1;
+        await showCharacterDatabase(interaction, searchTerm, page);
+        return;
+      }
+
       // Nexus routing
       if (customId === 'nx_market') {
         await interaction.deferReply();
@@ -1603,6 +1631,16 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         const sort = interaction.values[0] || 'rarity_desc';
         await showCollectionPage(interaction as any, interaction.user.id, 1, { search: '', sort });
         return;
+      }
+
+      // Character details from lookup select menu
+      if (customId === 'lookup_select') {
+        const value = interaction.values?.[0];
+        if (value && value.startsWith('lookup_view_')) {
+          const slug = value.replace('lookup_view_', '');
+          await showCharacterDetails(interaction, slug);
+          return;
+        }
       }
 
       // Gauntlet select menu
@@ -2094,6 +2132,10 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction | B
     embeds: [embed],
     components 
   });
+  // Store last view context on the message for back navigation
+  try {
+    (interaction as any)._lookupCtx = { searchTerm, page };
+  } catch {}
 }
 
 // Global relic lookup - anyone can view any relic
@@ -2248,7 +2290,7 @@ async function showCharacterDatabase(interaction: ChatInputCommandInteraction | 
   });
 
   // Navigation buttons
-  const components = [];
+  const components = [] as any[];
   const navigationRow = new ActionRowBuilder<ButtonBuilder>();
   
   if (page > 1) {
@@ -2296,8 +2338,129 @@ async function showCharacterDatabase(interaction: ChatInputCommandInteraction | 
     components.push(navigationRow);
   }
 
+  // Selection menu to view character details with portrait
+  const selectRow = new ActionRowBuilder<StringSelectMenuBuilder>()
+    .addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('lookup_select')
+        .setPlaceholder('Select a character to view details...')
+        .addOptions(
+          pageCharacters.map((character: any) => ({
+            label: character.name,
+            description: `${character.pantheon} • ${character.class} • ${character.element}`,
+            value: `lookup_view_${character.slug}`
+          }))
+        )
+    );
+  components.push(selectRow as any);
+
   await interaction.editReply({ 
     embeds: [embed],
     components 
   });
 } 
+
+// Build absolute portrait URL for Discord embeds
+function getPortraitUrlForSlug(slug: string): string {
+  // Prefer CDN_BASE_URL, otherwise if the static file exists, fall back to absolute file URL served under /cdn
+  const base = process.env.CDN_BASE_URL || 'http://localhost:3000/cdn';
+  // Best effort existence check to avoid broken images in dev
+  try {
+    const localPath = path.resolve(process.cwd(), 'public', 'portraits', `${slug}.png`);
+    if (fs.existsSync(localPath)) return `${base}/portraits/${slug}.png`;
+  } catch {}
+  return `${base}/portraits/${slug}.png`;
+}
+
+async function showCharacterDetails(interaction: ChatInputCommandInteraction | ButtonInteraction | StringSelectMenuInteraction, slug: string) {
+  let characters: any[] = [];
+  try {
+    characters = require("../../data/allgodschars.json");
+  } catch {}
+  const ch = characters.find((c: any) => c.slug === slug);
+  if (!ch) {
+    const embed = new EmbedBuilder().setTitle('❌ Not found').setDescription(`Character '${slug}' not found`).setColor(0xE74C3C);
+    if ((interaction as any).editReply) {
+      await (interaction as any).editReply({ embeds: [embed], components: [] });
+    } else {
+      await (interaction as any).reply({ embeds: [embed] });
+    }
+    return;
+  }
+  const rarityEmoji = getRarityEmoji(ch.rarity);
+  const embed = new EmbedBuilder()
+    .setTitle(`${rarityEmoji} ${ch.name}`)
+    .setDescription(ch.lore || '')
+    .setColor(getRarityColor(ch.rarity) as any)
+    .addFields(
+      { name: 'Pantheon', value: ch.pantheon || '—', inline: true },
+      { name: 'Class', value: ch.class || '—', inline: true },
+      { name: 'Element', value: ch.element || '—', inline: true },
+      { name: 'Stats', value: `HP ${ch.hp} • ATK ${ch.atk} • DEF ${ch.def} • SPD ${ch.spd}`, inline: false }
+    );
+  // Prefer local attachment in dev to avoid Discord caching issues
+  try {
+    const localPath = path.resolve(process.cwd(), 'public', 'portraits', `${slug}.png`);
+    if (fs.existsSync(localPath)) {
+      const attachment = new AttachmentBuilder(localPath, { name: `${slug}.png` });
+      embed.setImage(`attachment://${slug}.png`);
+      const backRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder().setCustomId('lookup_back').setLabel('⬅️ Back to list').setStyle(ButtonStyle.Secondary)
+      );
+      // Send a new message with attachment (cannot attach files when updating an existing message)
+      await (interaction as any).reply({ embeds: [embed], components: [backRow] as any, files: [attachment] });
+      return;
+    }
+  } catch {}
+  const portraitUrl = getPortraitUrlForSlug(slug);
+  if (portraitUrl) embed.setImage(portraitUrl);
+
+  // Passive details (supports structured and legacy)
+  if (ch.passive && ch.passive.name) {
+    embed.addFields({ name: `Passive — ${ch.passive.name}`, value: ch.passive.desc || '—', inline: false });
+  } else if (ch.passive_ability_name || ch.passive_ability_desc) {
+    embed.addFields({ name: `Passive — ${ch.passive_ability_name || '—'}`, value: ch.passive_ability_desc || '—', inline: false });
+  }
+
+  // Add back button to return to the previous list page
+  const backRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder().setCustomId('lookup_back').setLabel('⬅️ Back to list').setStyle(ButtonStyle.Secondary)
+  );
+  const payload = { embeds: [embed], components: [backRow] as any };
+  if ((interaction as any).update) {
+    await (interaction as any).update(payload);
+  } else if ((interaction as any).editReply) {
+    await (interaction as any).editReply(payload);
+  }
+}
+
+// Build character details embed (no send)
+function buildCharacterDetailsEmbed(slug: string): any {
+  let characters: any[] = [];
+  try {
+    characters = require("../../data/allgodschars.json");
+  } catch {}
+  const ch = characters.find((c: any) => c.slug === slug);
+  if (!ch) {
+    return new EmbedBuilder().setTitle('❌ Not found').setDescription(`Character '${slug}' not found`).setColor(0xE74C3C);
+  }
+  const rarityEmoji = getRarityEmoji(ch.rarity);
+  const embed = new EmbedBuilder()
+    .setTitle(`${rarityEmoji} ${ch.name}`)
+    .setDescription(ch.lore || '')
+    .setColor(getRarityColor(ch.rarity) as any)
+    .addFields(
+      { name: 'Pantheon', value: ch.pantheon || '—', inline: true },
+      { name: 'Class', value: ch.class || '—', inline: true },
+      { name: 'Element', value: ch.element || '—', inline: true },
+      { name: 'Stats', value: `HP ${ch.hp} • ATK ${ch.atk} • DEF ${ch.def} • SPD ${ch.spd}`, inline: false }
+    );
+  const portraitUrl = getPortraitUrlForSlug(slug);
+  if (portraitUrl) embed.setImage(portraitUrl);
+  if (ch.passive && ch.passive.name) {
+    embed.addFields({ name: `Passive — ${ch.passive.name}`, value: ch.passive.desc || '—', inline: false });
+  } else if (ch.passive_ability_name || ch.passive_ability_desc) {
+    embed.addFields({ name: `Passive — ${ch.passive_ability_name || '—'}`, value: ch.passive_ability_desc || '—', inline: false });
+  }
+  return embed;
+}
