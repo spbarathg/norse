@@ -18,7 +18,7 @@ export function createClient() {
       return;
     }
 
-    if (interaction.isButton() || interaction.isStringSelectMenu()) {
+    if (interaction.isButton() || interaction.isStringSelectMenu() || interaction.isModalSubmit()) {
       console.log("Processing component interaction:", interaction.customId);
       await handleComponentInteraction(interaction);
       return;

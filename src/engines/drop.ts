@@ -94,7 +94,7 @@ export async function performDrop(input: DropInput): Promise<DropResult> {
   const baseUrl = process.env.CDN_BASE_URL || "http://localhost:3000/cdn";
   const imageUrl = `${baseUrl}/portraits/${character.slug}.png`;
 
-  const embed = {
+  const embed: any = {
     title: `${character.name} — ${rarity} Relic` ,
     description: `Era: ${currentEra.name} | Born: ${igTs}`,
     fields: [

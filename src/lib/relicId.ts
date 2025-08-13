@@ -3,7 +3,6 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 const eras = require("../config/eras.json");
-const characters = require("../../data/allgodschars.json");
 
 function generateRandomSuffix(length: number): string {
   const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

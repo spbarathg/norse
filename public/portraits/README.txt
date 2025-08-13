@@ -1,1 +1,0 @@
-Place character portrait PNGs here named by slug, e.g. zeus.png, odin.png. In dev, embeds will reference /cdn/portraits/<slug>.png. 

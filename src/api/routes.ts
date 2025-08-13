@@ -2,6 +2,7 @@ import express from "express";
 import { performDrop } from "../engines/drop.js";
 import { getPrisma } from "../lib/db.js";
 import { marketRouter } from "./market.js";
+import { tradeRouter } from "./trade.js";
 import { startMission, claimMission, completeMissionJob } from "../engines/missions.js";
 import { runDecayTick } from "../engines/decay.js";
 
@@ -79,4 +80,7 @@ router.post("/decay/tick", async (_req, res) => {
 });
 
 // Marketplace
-router.use("/market", marketRouter); 
+router.use("/market", marketRouter);
+
+// Trading System
+router.use("/trade", tradeRouter); 

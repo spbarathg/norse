@@ -93,4 +93,55 @@ model Event {
   payload       String   // JSON as String for SQLite
   scheduledIgTs String
   status        String
+}
+
+model TradeOffer {
+  id               String   @id @default(cuid())
+  initiatorUserId  String
+  targetUserId     String
+  status           String   @default("pending") // pending | accepted | cancelled | expired | completed
+  offerType        String   // direct | open | counteroffer
+  
+  // What initiator is offering
+  offeredRelicIds  String   @default("[]") // JSON array as String
+  offeredGold      Int      @default(0)
+  offeredMaterials String   @default("{}") // JSON as String
+  
+  // What initiator wants in return
+  requestedRelicIds String  @default("[]") // JSON array as String  
+  requestedGold     Int     @default(0)
+  requestedMaterials String @default("{}") // JSON as String
+  
+  // Trade metadata
+  message          String?  // Optional message from trader
+  parentOfferId    String?  // For counteroffers
+  expiresAt        DateTime
+  createdAt        DateTime @default(now())
+  completedAt      DateTime?
+  
+  // Security
+  escrowLocked     Boolean  @default(false)
+  
+  @@index([initiatorUserId])
+  @@index([targetUserId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model TradeHistory {
+  id            String   @id @default(cuid())
+  tradeOfferId  String
+  user1Id       String
+  user2Id       String
+  
+  // What was exchanged
+  user1Gave     String   // JSON with relics, gold, materials
+  user2Gave     String   // JSON with relics, gold, materials
+  
+  completedAt   DateTime @default(now())
+  tradeValue    Int      @default(0) // Estimated total value in gold
+  
+  @@index([user1Id])
+  @@index([user2Id])
+  @@index([completedAt])
 } 

@@ -5,14 +5,10 @@ export const marketRouter = Router();
 
 marketRouter.get("/listings", async (req, res) => {
   const prisma = getPrisma();
-  const { page = 1, pageSize = 20, rarity, eraId } = req.query as any;
-  const where: any = { status: "active" };
-  if (rarity) where.rarity = rarity;
-  if (eraId) where.eraId = eraId;
-
+  const { page = 1, pageSize = 20 } = req.query as any;
   const skip = (Number(page) - 1) * Number(pageSize);
   const items = await prisma.marketListing.findMany({
-    where,
+    where: { status: "active" },
     orderBy: { createdTs: "desc" },
     skip,
     take: Number(pageSize),

@@ -7,7 +7,7 @@ const missionDefs: any[] = require("../config/missions.json");
 function getMissionDef(id: string) {
   const def = missionDefs.find((m) => m.id === id);
   if (!def) throw new Error("mission_not_found");
-  return def as { id: string; durationSec: number; xpReward: number; decayReduction: number; rewardTable: any };
+  return def as { id: string; durationSec: number; xpReward: number; decayReduction: number; rewardTable: any; affinity?: string };
 }
 
 function randInt(min: number, max: number) {
@@ -58,13 +58,50 @@ export async function completeMissionJob(missionId: string) {
   const relicIds = JSON.parse(mission.relicIds || "[]");
 
   // compute rewards
-  const gold = randInt(def.rewardTable.goldMin, def.rewardTable.goldMax);
+  let gold = randInt(def.rewardTable.goldMin, def.rewardTable.goldMax);
   const materials: Record<string, number> = {};
   for (const [mat, range] of Object.entries(def.rewardTable.materials || {})) {
     const [a, b] = range as [number, number];
     const amt = randInt(a, b);
     if (amt > 0) materials[mat] = amt;
   }
+
+  // Affinity effects
+  // volcanic_zone: Fire +10% gold, Ice -10%
+  // ancient_ruins: Guardian/Mage higher rare chance -> +1 material if exists
+  // windy_plains: Rogue/Wind 5% faster -> simulate by +2 gold
+  try {
+    const relics = await prisma.relic.findMany({ where: { id: { in: relicIds } } });
+    const characters = require("../../data/allgodschars.json") as any[];
+    const charById = new Map<number, any>(characters.map(c => [c.id, c]));
+    if (def.affinity === 'volcanic_zone') {
+      let bonus = 0;
+      let malus = 0;
+      for (const r of relics) {
+        const c = charById.get(r.characterId);
+        if (c?.element === 'Fire') bonus += 0.1;
+        if (c?.element === 'Ice') malus += 0.1;
+      }
+      gold = Math.max(0, Math.floor(gold * (1 + bonus - malus)));
+    }
+    if (def.affinity === 'ancient_ruins') {
+      const anyGM = relics.some(r => {
+        const c = charById.get(r.characterId);
+        return c && (c.class === 'Guardian' || c.class === 'Mage');
+      });
+      if (anyGM) {
+        const firstMat = Object.keys(def.rewardTable.materials || {})[0];
+        if (firstMat) materials[firstMat] = (materials[firstMat] || 0) + 1;
+      }
+    }
+    if (def.affinity === 'windy_plains') {
+      const anyFav = relics.some(r => {
+        const c = charById.get(r.characterId);
+        return c && (c.class === 'Rogue' || c.element === 'Wind');
+      });
+      if (anyFav) gold += 2;
+    }
+  } catch {}
 
   await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     // unlock relics and apply xp
@@ -93,7 +130,7 @@ export async function completeMissionJob(missionId: string) {
     // credit pending rewards in mission row; user claims later
     await (tx as any).mission.update({
       where: { id: mission.id },
-      data: { status: "ready", rewardPayload: JSON.stringify({ gold, materials, xp: def.xpReward }) },
+      data: { status: "ready", rewardPayload: JSON.stringify({ gold, materials, xp: def.xpReward, affinity: def.affinity || null }) },
     });
   });
 

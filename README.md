@@ -1,116 +1,125 @@
-# Norse – Living Relics Discord Bot (MVP) ✅ COMPLETE
+# Norse – Living Relics Discord Bot
 
-## 🎉 Status: 100% FUNCTIONAL MVP
+## Status: Active, feature-complete MVP
 
-All core features implemented and tested. End-to-end workflow verified.
+This repository contains a Discord bot and REST API for a collectible "Living Relics" game. It includes relic drops, missions, trading, a basic marketplace, decay, in‑game time, and public Discord embeds. This README reflects the current codebase.
 
-### ✅ Completed Features
+## Features
 
-- **Drop System**: Deterministic RNG, character selection, relic persistence
-- **Mission System**: Start, complete, claim rewards with relic locking
-- **Economy**: Gold/materials tracking, user balance management  
-- **Marketplace**: List, buy, browse with ownership transfers
-- **Collection**: View relics, pagination, detailed relic information
-- **Decay System**: Hourly durability loss, evolution stage updates
-- **Time Engine**: In-game time progression (configurable scale)
-- **Database**: SQLite with full schema, migrations, seeding
-- **APIs**: RESTful endpoints for all operations
-- **Discord Commands**: Full slash command integration
+- **Relic Drops**: Deterministic RNG per user+nonce; rarity tiers S/A/B/C; premium relic IDs (e.g., `E1ZE3K`).
+- **Collections**: Public collection pages with pagination and quick actions; global relic viewer by ID.
+- **Missions**: Start, complete (job), and claim rewards; relic locking during missions; rewards grant gold/materials/xp.
+- **Economy**: User gold and materials stored per account; public balance display; daily reward with 7‑day streak bonuses.
+- **Marketplace (basic)**: List and buy relics for gold via slash commands and REST API.
+- **Player Trading (offers)**: Create direct/open/counter trade offers including relics, gold, and materials; accept/cancel; public browse and history.
+- **Decay**: Hourly durability decay with rarity/era modifiers; evolution stage updates; history logging.
+- **In‑game Time**: Configurable clock used for timestamps and eras.
+- **Public Embeds**: All command replies are public (non‑ephemeral) and use clean embeds and components.
 
-### 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Install dependencies
 npm i
 
-# Generate Prisma client
+# Prisma
 npm run prisma:generate
-
-# Run migrations and seed data
 npm run prisma:migrate
 npm run prisma:seed
 
-# Optional: Register Discord commands (needs bot token)
+# Register Discord commands (guild if DISCORD_GUILD_ID set, otherwise global)
 npm run register-commands
 
-# Start development server
+# Run API + bot (PORT=3000 default)
 npm run dev
 ```
 
-### 🎮 Discord Commands
-
-- `/drop` — summon relic and receive cinematic embed
-- `/missions start <mission_id> <relic_ids>` — start mission
-- `/missions claim <mission_id>` — claim rewards  
-- `/market list <relic_id> <price>` — list relic
-- `/market buy <listing_id>` — buy listing
-- `/collection [page]` — view your relics
-- `/view <relic_id>` — detailed view
-- `/balance` — gold+materials
-
-### 🔧 API Endpoints
-
-- `POST /api/drop` — create relic
-- `POST /api/missions/start|complete|claim` — mission operations
-- `GET /api/market/listings` — browse marketplace
-- `POST /api/market/list|buy` — marketplace operations
-- `POST /api/decay/tick` — run decay worker
-- `GET /api/relics/:id` — view relic details
-
-### 🎨 Assets
-
-- `public/portraits/` — character portraits (*.png by slug)
-- `public/overlays/` — era crests and evolution auras
-- Static serving via `/cdn` endpoint
-
-### ⚙️ Configuration
-
 Environment variables in `.env`:
-- `DATABASE_URL` — SQLite database path
-- `DISCORD_TOKEN` — Bot token (optional for testing)
-- `TIME_SCALE` — Seconds per in-game day (default: 3600)
-- `CDN_BASE_URL` — Asset serving base URL
+- `DATABASE_URL` (e.g., `file:./prisma/dev.db`)
+- `DISCORD_TOKEN`
+- `DISCORD_CLIENT_ID`
+- `DISCORD_GUILD_ID` (optional; for faster guild registrations)
+- `TIME_SCALE` (default `3600`)
+- `IG_EPOCH_REAL_ISO` (default `2025-01-01T00:00:00Z`)
+- `CDN_BASE_URL` (default `http://localhost:3000/cdn`)
 
-### 🏗️ Architecture
+## Discord Commands
 
-- **Frontend**: Discord.js slash commands + embeds
-- **Backend**: Express.js REST API + worker functions
-- **Database**: SQLite with Prisma ORM 
-- **Time System**: Configurable in-game clock
-- **Assets**: Static file serving with placeholder system
+- `/drop` — Summon a new relic with rarity and character; shows action buttons.
+- `/missions start mission_id relic_ids` — Start mission with comma‑separated relic IDs.
+- `/missions claim mission_id` — Claim rewards after job completion.
+- `/market list relic_id price` — List a relic for sale.
+- `/market buy listing_id` — Buy a market listing.
+- `/collection [page]` — View your relic collection.
+- `/view relic_id` — Public view of any relic by ID.
+- `/balance` — Show your gold and materials with quick actions.
+- `/daily` — Claim daily rewards with streaks and bonuses.
+- `/inspect player [page]` — View another player’s collection.
+- `/lookup [search] [page]` — Browse all characters; search by name/pantheon/class/element. Sorted by rarity.
+- `/trade offer [player] [message]` — Create a trade offer (open if no player).
+- `/trade list [type]` — View sent/received/open/all trades.
+- `/trade view trade_id` — View trade details.
+- `/trade accept trade_id` — Accept a trade.
+- `/trade cancel trade_id` — Cancel a trade (initiator/target).
+- `/trade history [page]` — View your completed trade history.
+- `/browse trades|market [page] [rarity]` — Browse open trades or market listings.
 
-### 📊 Test Results
+Notes:
+- Replies are public; embeds are viewable by everyone in channel.
+- IDs: Relics use premium IDs; `generateRelicId` ensures uniqueness.
 
-All systems verified functional:
-```
-✅ Drop system working
-✅ Mission system working  
-✅ Reward system working
-✅ Economy system working
-✅ Marketplace working
-✅ Decay system working
-✅ Database persistence working
-✅ SQLite integration working
-```
+## REST API
 
-### 🚀 Production Notes
+- `GET /api/health` — Healthcheck.
+- `POST /api/drop` — Body: `{ userId, nonce? }` or header `x-bot-user-id`; returns relic info and embed.
+- `GET /api/relics/:id` — Get relic by ID.
+- Missions: `POST /api/missions/start`, `/complete`, `/claim`.
+- Decay: `POST /api/decay/tick` — Runs decay tick over unlocked relics.
+- Market:
+  - `GET /api/market/listings?{page,pageSize,rarity,eraId}`
+  - `POST /api/market/list` — `{ sellerUserId, relicId, priceGold }`
+  - `POST /api/market/buy` — `{ buyerUserId, listingId }`
+- Trade:
+  - `GET /api/trade/user/:userId?type=sent|received|all`
+  - `GET /api/trade/:tradeId`
+  - `POST /api/trade/create`
+  - `POST /api/trade/:tradeId/accept` — `{ accepterUserId }`
+  - `POST /api/trade/:tradeId/cancel` — `{ userId }`
+  - `POST /api/trade/:tradeId/counter` — counter‑offer body
+  - `GET /api/trade/browse/open?{page,pageSize}`
+  - `GET /api/trade/history/:userId?{page,pageSize}`
+  - `POST /api/trade/admin/cleanup`
 
-For production deployment:
-1. Switch to PostgreSQL (update `prisma/schema.prisma`)
-2. Add Redis for caching/queues
-3. Deploy workers for decay automation
-4. Add real character portrait assets
-5. Configure proper Discord bot permissions
+## Data & Assets
 
-### 📋 Next Steps (Post-MVP)
+- Characters: `data/allgodschars.json` (used for drops, lookup, and embeds).
+- Eras: `src/config/eras.json` (seeded to DB via `prisma/seed.ts`).
+- Missions: `src/config/missions.json`.
+- Portraits: `public/portraits/*.png` served under `/cdn/portraits/<slug>.png`.
 
-- Shadowborn transformation system
-- PvP combat engine  
-- Asset overlay/aura system
-- Advanced provenance tracking
-- Guild system and pantheon wars
-- Preservation items and mechanics
+## Architecture
 
----
+- Bot: `discord.js` (intents: Guilds) with slash commands and interactive components.
+- API: Express router under `/api` with modular subrouters for market and trade.
+- Persistence: SQLite via Prisma; JSON stored as strings where appropriate for SQLite.
+- Time: `TIME_SCALE` and `IG_EPOCH_REAL_ISO` control in‑game timestamp formatting.
+- Decay: Batch updates unlocked relics; rarity and era modifiers; write history entries.
+- Trading: Validations for ownership/locks/balances; atomic DB transactions; history log.
 
-**🎯 MVP Status: COMPLETE & READY FOR PRODUCTION** 
+## Design Notes
+
+- Public, non‑ephemeral messaging and embeds to encourage social play.
+- Clean, minimal embeds with clear icons/colors; consistent action/navigation rows.
+- Deterministic RNG for fairness and reproducibility of drops.
+- Premium human‑readable relic IDs for shareability.
+
+## Housekeeping
+
+- Only this README is kept as project documentation. All other docs have been removed.
+- Unused dependencies: `bullmq` is present but not used in code; `redis` helper exists but is not referenced.
+- Overlays: README no longer references non‑existent overlays folder.
+
+## Production Tips
+
+- Consider PostgreSQL in production; update `prisma/schema.prisma` and `DATABASE_URL`.
+- Add background job scheduling for decay and mission completion.
+- Ensure proper bot scopes: `applications.commands` and necessary channel permissions.
