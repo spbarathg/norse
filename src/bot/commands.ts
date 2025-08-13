@@ -86,6 +86,12 @@ export const commandBuilders = [
         .setName("buy")
         .setDescription("Buy a listing")
         .addStringOption((o) => o.setName("listing_id").setDescription("Listing ID").setRequired(true))
+    )
+    .addSubcommand((s) =>
+      s
+        .setName("browse")
+        .setDescription("Browse marketplace listings")
+        .addIntegerOption((o) => o.setName("page").setDescription("Page number").setRequired(false))
     ),
   new SlashCommandBuilder()
     .setName("collection")
@@ -97,11 +103,7 @@ export const commandBuilders = [
     .addStringOption((o) => o.setName("relic_id").setDescription("Relic ID").setRequired(true)),
   new SlashCommandBuilder().setName("balance").setDescription("View your gold and materials"),
   new SlashCommandBuilder().setName("daily").setDescription("Claim your daily reward"),
-  new SlashCommandBuilder()
-    .setName("inspect")
-    .setDescription("View another player's collection")
-    .addUserOption((o) => o.setName("player").setDescription("Player to inspect").setRequired(true))
-    .addIntegerOption((o) => o.setName("page").setDescription("Page number").setRequired(false)),
+  // Removed separate inspect; handled via /profile
   new SlashCommandBuilder()
     .setName("lookup")
     .setDescription("Browse all available characters in the database")
@@ -120,7 +122,9 @@ export const commandBuilders = [
     .setDescription("Open the Town Square hub"),
   new SlashCommandBuilder()
     .setName("profile")
-    .setDescription("Show your Norse player profile"),
+    .setDescription("Show a player profile and collection")
+    .addUserOption((o) => o.setName("player").setDescription("Player to view").setRequired(false))
+    .addIntegerOption((o) => o.setName("page").setDescription("Collection page").setRequired(false)),
   new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("Show community leaderboards"),
@@ -340,6 +344,12 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
         }
         return;
       }
+      if (sub === "browse") {
+        await interaction.deferReply();
+        const page = interaction.options.getInteger("page") || 1;
+        await handleBrowseMarket(interaction, page, null);
+        return;
+      }
     }
 
     if (interaction.commandName === "collection") {
@@ -405,16 +415,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    if (interaction.commandName === "inspect") {
-      console.log("Starting inspect command...");
-      await interaction.deferReply(); // PUBLIC - social viewing
-      const targetUser = interaction.options.getUser("player", true);
-      const page = interaction.options.getInteger("page") || 1;
-      console.log(`Calling showPlayerCollection for ${targetUser.id} (${targetUser.username}), page ${page}`);
-      await showPlayerCollection(interaction, targetUser.id, targetUser.username, page);
-      console.log("Inspect command completed");
-      return;
-    }
+    // Inspect removed; handled by /profile
 
     if (interaction.commandName === "lookup") {
       console.log("Starting lookup command...");
@@ -494,7 +495,9 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
     }
     if (interaction.commandName === "profile") {
       await interaction.deferReply();
-      const { embed, components } = await buildUserProfileEmbed(userId, interaction);
+      const targetUser = interaction.options.getUser("player") || interaction.user;
+      const { embed, components } = await buildUserProfileEmbed(targetUser.id, interaction);
+      // Only show profile initially; collection appears on button click
       await interaction.editReply({ embeds: [embed], components });
       return;
     }
@@ -661,6 +664,13 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction | But
 
   navigationRow.addComponents(
     new ButtonBuilder()
+      .setCustomId('collection_page_1')
+      .setLabel('⏮️ First')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
       .setCustomId('collection_refresh')
       .setLabel('🔄 Refresh')
       .setStyle(ButtonStyle.Secondary)
@@ -674,6 +684,13 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction | But
         .setStyle(ButtonStyle.Secondary)
     );
   }
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`collection_page_${totalPages}`)
+      .setLabel('Last ⏭️')
+      .setStyle(ButtonStyle.Secondary)
+  );
 
   // Quick actions row
   const actionsRow = new ActionRowBuilder<StringSelectMenuBuilder>()
@@ -721,9 +738,9 @@ function getRarityName(rarity: string): string {
   return names[rarity as keyof typeof names] || 'Unknown';
 }
 
-async function buildUserProfileEmbed(userId: string, interaction: ChatInputCommandInteraction | ButtonInteraction) {
+async function buildUserProfileEmbed(viewUserId: string, interaction: ChatInputCommandInteraction | ButtonInteraction) {
   const prisma = getPrisma();
-  const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+  const user = await prisma.user.upsert({ where: { userId: viewUserId }, create: { userId: viewUserId, discordId: viewUserId, gold: 0, materials: JSON.stringify({}) }, update: {} });
   const mats = JSON.parse(user.materials || '{}');
   const featuredRelicId: string | undefined = mats.featuredRelicId;
   const relic = featuredRelicId ? await prisma.relic.findUnique({ where: { id: featuredRelicId } }) : null;
@@ -734,6 +751,10 @@ async function buildUserProfileEmbed(userId: string, interaction: ChatInputComma
     if (relic) character = characters.find((c: any) => c.id === relic.characterId);
   } catch {}
 
+  const displayUser = await (interaction.client as any).users.fetch(viewUserId).catch(() => null);
+  const displayName = displayUser?.username || (viewUserId === (interaction as any).user.id ? (interaction as any).user.username : 'Player');
+  const isSelf = viewUserId === (interaction as any).user.id;
+
   const achievements = (mats.achievements || {}) as Record<string, boolean>;
   const badges: string[] = [];
   if (achievements.first_s_tier_drop) badges.push('🌟');
@@ -741,7 +762,7 @@ async function buildUserProfileEmbed(userId: string, interaction: ChatInputComma
   if (achievements.pantheon_collector_greco) badges.push('🏛️');
 
   const embed = new EmbedBuilder()
-    .setTitle(`${interaction.user.username} — Player Profile`)
+    .setTitle(`${displayName} — Player Profile`)
     .setColor(0xC9A227)
     .setTimestamp()
     .addFields(
@@ -755,14 +776,13 @@ async function buildUserProfileEmbed(userId: string, interaction: ChatInputComma
     embed.setDescription(`Featured Relic: ${character ? `${character.name} (${relic.rarity}) — ${character.class}, ${character.element}` : `Relic ${relic.id}`}\nPassive: ${character ? `"${character.passive_ability_name}" — ${character.passive_ability_desc}` : '—'}`);
     if (baseUrl) embed.setImage(portraitUrl);
   } else {
-    embed.setDescription('Use the button below to choose a Featured Relic.');
+    embed.setDescription(isSelf ? 'Use the button below to choose a Featured Relic.' : 'No featured relic set.');
   }
 
-  // Simplified stats placeholders
-  const missionsCompleted = await prisma.mission.count({ where: { ownerUserId: userId, status: 'claimed' } });
+  const missionsCompleted = await prisma.mission.count({ where: { ownerUserId: viewUserId, status: 'claimed' } });
   let tradesMade = 0;
   try {
-    tradesMade = await (prisma as any).tradeHistory.count({ where: { OR: [{ user1Id: userId }, { user2Id: userId }] } });
+    tradesMade = await (prisma as any).tradeHistory.count({ where: { OR: [{ user1Id: viewUserId }, { user2Id: viewUserId }] } });
   } catch {
     tradesMade = 0;
   }
@@ -778,11 +798,62 @@ async function buildUserProfileEmbed(userId: string, interaction: ChatInputComma
     embed.addFields({ name: 'Achievements', value: badges.join('  '), inline: false });
   }
 
-  const actions = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId('profile_change_featured').setLabel('Change Featured Relic').setStyle(ButtonStyle.Primary)
+  const actions = new ActionRowBuilder<ButtonBuilder>();
+  actions.addComponents(
+    new ButtonBuilder().setCustomId(`profile_view_collection_${viewUserId}_1`).setLabel('📚 View Collection').setStyle(ButtonStyle.Secondary)
   );
+  if (isSelf) {
+    actions.addComponents(
+      new ButtonBuilder().setCustomId('profile_change_featured').setLabel('Change Featured Relic').setStyle(ButtonStyle.Primary)
+    );
+  }
 
   return { embed, components: [actions] as any };
+}
+
+async function buildPlayerCollectionEmbed(targetUserId: string, targetUsername: string, page: number) {
+  const prisma = getPrisma();
+  const pageSize = 4;
+  const skip = (page - 1) * pageSize;
+  const [relics, totalCount] = await Promise.all([
+    prisma.relic.findMany({ where: { ownerUserId: targetUserId }, orderBy: { birthRealTs: "desc" }, skip, take: pageSize }),
+    prisma.relic.count({ where: { ownerUserId: targetUserId } })
+  ]);
+
+  const totalPages = Math.ceil(totalCount / pageSize) || 1;
+
+  const embed = new EmbedBuilder()
+    .setTitle(targetUserId ? `👤 ${targetUsername}'s Collection` : '📚 Collection')
+    .setDescription(totalCount === 0 ? 'No relics found.' : `**Page ${page} of ${totalPages}** • ${totalCount} total relics\n⠀`)
+    .setColor(0x9B59B6)
+    .setTimestamp();
+
+  relics.forEach((relic, index) => {
+    const rarityEmoji = getRarityEmoji(relic.rarity);
+    embed.addFields({
+      name: `${rarityEmoji} **\`${relic.id}\`**`,
+      value: `${getRarityName(relic.rarity)} • ${relic.durabilityPct.toFixed(1)}% HP • ${relic.evolutionStage} • ${relic.xp.toLocaleString()} XP`,
+      inline: false
+    });
+    if (index < relics.length - 1) embed.addFields({ name: "⠀", value: "⠀", inline: false });
+  });
+
+  const navigationRow = new ActionRowBuilder<ButtonBuilder>();
+  if (page > 1) {
+    navigationRow.addComponents(
+      new ButtonBuilder().setCustomId(`profcol_first_${targetUserId}`).setLabel('⏮️ First').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`profcol_prev_${targetUserId}_${page - 1}`).setLabel('⬅️ Previous').setStyle(ButtonStyle.Secondary),
+    );
+  }
+  navigationRow.addComponents(new ButtonBuilder().setCustomId(`profcol_refresh_${targetUserId}_${page}`).setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
+  if (page < totalPages) {
+    navigationRow.addComponents(
+      new ButtonBuilder().setCustomId(`profcol_next_${targetUserId}_${page + 1}`).setLabel('Next ➡️').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`profcol_last_${targetUserId}`).setLabel('Last ⏭️').setStyle(ButtonStyle.Secondary),
+    );
+  }
+
+  return { embed, components: [navigationRow] as any };
 }
 
 async function presentFeaturedRelicSelector(interaction: ButtonInteraction, userId: string) {
@@ -855,6 +926,19 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         await presentFeaturedRelicSelector(interaction, userId);
         return;
       }
+      if (customId.startsWith('profile_view_collection_')) {
+        const parts = customId.split('_');
+        const targetUserId = parts[3];
+        const page = parseInt(parts[4] || '1', 10) || 1;
+        const targetUser = await interaction.client.users.fetch(targetUserId);
+        await interaction.deferUpdate();
+        const collection = await buildPlayerCollectionEmbed(targetUserId, targetUser.username, page);
+        const currentEmbeds = (interaction.message as any).embeds || [];
+        const profileEmbed = currentEmbeds[0];
+        const newEmbeds = profileEmbed ? [profileEmbed, collection.embed] : [collection.embed];
+        await (interaction.message as any).edit({ embeds: newEmbeds, components: collection.components });
+        return;
+      }
       // removed share button to keep UI to working features only
       if (customId === 'ach_view_profile') {
         await interaction.deferReply();
@@ -894,17 +978,28 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         return;
       }
 
-      // Inspect player collection pagination
-      if (customId.startsWith('inspect_')) {
+      // Profile collection pagination
+      if (customId.startsWith('profcol_')) {
         const parts = customId.split('_');
-        const targetUserId = parts[1];
-        const page = parseInt(parts[2]);
-        
-        // Get target user info
+        let action = parts[1];
+        const targetUserId = parts[2];
+        let page = parts[3] ? parseInt(parts[3]) : 1;
         const targetUser = await interaction.client.users.fetch(targetUserId);
-        
-        await interaction.deferUpdate(); // Keep same message
-        await showPlayerCollection(interaction, targetUserId, targetUser.username, page);
+        await interaction.deferUpdate();
+        // Resolve action into page
+        const prisma = getPrisma();
+        const totalCount = await prisma.relic.count({ where: { ownerUserId: targetUserId } });
+        const totalPages = Math.max(1, Math.ceil(totalCount / 4));
+        if (action === 'first') page = 1;
+        if (action === 'last') page = totalPages;
+        if (action === 'next') page = Math.min(page, totalPages);
+        if (action === 'prev') page = Math.max(page, 1);
+        // Build and swap just the collection pane if already present; otherwise append
+        const collection = await buildPlayerCollectionEmbed(targetUserId, targetUser.username, page);
+        const currentEmbeds = (interaction.message as any).embeds || [];
+        const profileEmbed = currentEmbeds[0];
+        const newEmbeds = profileEmbed ? [profileEmbed, collection.embed] : [collection.embed];
+        await (interaction.message as any).edit({ embeds: newEmbeds, components: collection.components });
         return;
       }
 
@@ -1393,6 +1488,13 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction | B
 
   navigationRow.addComponents(
     new ButtonBuilder()
+      .setCustomId(`inspect_${targetUserId}_1`)
+      .setLabel('⏮️ First')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
       .setCustomId(`inspect_${targetUserId}_${page}`)
       .setLabel('🔄 Refresh')
       .setStyle(ButtonStyle.Secondary)
@@ -1406,6 +1508,13 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction | B
         .setStyle(ButtonStyle.Secondary)
     );
   }
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`inspect_${targetUserId}_${totalPages}`)
+      .setLabel('Last ⏭️')
+      .setStyle(ButtonStyle.Secondary)
+  );
 
   if (navigationRow.components.length > 0) {
     components.push(navigationRow);
@@ -1578,6 +1687,13 @@ async function showCharacterDatabase(interaction: ChatInputCommandInteraction | 
 
   navigationRow.addComponents(
     new ButtonBuilder()
+      .setCustomId(`lookup_page_${searchTerm || 'all'}_1`)
+      .setLabel('⏮️ First')
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
       .setCustomId(`lookup_page_${searchTerm || 'all'}_${page}`)
       .setLabel('🔄 Refresh')
       .setStyle(ButtonStyle.Secondary)
@@ -1591,6 +1707,13 @@ async function showCharacterDatabase(interaction: ChatInputCommandInteraction | 
         .setStyle(ButtonStyle.Secondary)
     );
   }
+
+  navigationRow.addComponents(
+    new ButtonBuilder()
+      .setCustomId(`lookup_page_${searchTerm || 'all'}_${totalPages}`)
+      .setLabel('Last ⏭️')
+      .setStyle(ButtonStyle.Secondary)
+  );
 
   if (navigationRow.components.length > 0) {
     components.push(navigationRow);
