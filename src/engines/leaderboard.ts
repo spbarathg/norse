@@ -49,13 +49,7 @@ export async function getLeaderboardsEmbed(
         { label: "Mission Masters", value: "missions" },
       ])
   );
-  const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder().setCustomId("lb_weekly").setLabel("Weekly").setStyle(ButtonStyle.Primary),
-    new ButtonBuilder().setCustomId("lb_alltime").setLabel("All-Time").setStyle(ButtonStyle.Secondary),
-    new ButtonBuilder().setCustomId("lb_my_rank").setLabel("My Rank").setStyle(ButtonStyle.Secondary)
-  );
-
-  return { embeds: [embed], components: [select, buttons] };
+  return { embeds: [embed], components: [select] };
 }
 
 export async function handleLeaderboardInteraction() {

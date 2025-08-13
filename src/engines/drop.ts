@@ -23,6 +23,7 @@ const RARITY_WEIGHTS: Record<string, number> = {
 
 const DropInput = z.object({
   userId: z.string(),
+  era: z.string().optional(),
   nonce: z.string().optional(),
 });
 export type DropInput = z.infer<typeof DropInput>;
@@ -51,13 +52,33 @@ function pickCharacter(rng: () => number, rarity: string) {
   return pool[idx];
 }
 
+function pickCharacterByEra(rng: () => number, rarity: string, era: string) {
+  let pool = (characters as any[]).filter((c) => c.rarity === rarity);
+  
+  // Filter by pantheon if era is specified
+  if (era === "norse") {
+    pool = pool.filter((c) => c.pantheon.toLowerCase() === "norse");
+  } else if (era === "greco-roman") {
+    pool = pool.filter((c) => c.pantheon.toLowerCase() === "greco-roman");
+  }
+  // "all" era includes all characters
+  
+  if (pool.length === 0) {
+    // Fallback to all characters of that rarity if no match
+    pool = (characters as any[]).filter((c) => c.rarity === rarity);
+  }
+  
+  const idx = Math.floor(rng() * pool.length);
+  return pool[idx];
+}
+
 export async function performDrop(input: DropInput): Promise<DropResult> {
-  const { userId, nonce = Date.now().toString() } = DropInput.parse(input);
+  const { userId, era = "all", nonce = Date.now().toString() } = DropInput.parse(input);
   const seed = `${userId}:${nonce}`;
   const rng = seedrandom(seed);
 
   const rarity = weightedRoll(rng, RARITY_WEIGHTS);
-  const character = pickCharacter(rng, rarity);
+  const character = pickCharacterByEra(rng, rarity, era);
   const igTs = getCurrentInGameTimestamp();
   const currentEra = eras[0];
 
@@ -100,7 +121,10 @@ export async function performDrop(input: DropInput): Promise<DropResult> {
     fields: [
       { name: "Class", value: character.class, inline: true },
       { name: "Element", value: character.element, inline: true },
-      { name: "Passive", value: `"${character.passive_ability_name}" — ${character.passive_ability_desc}` },
+      ...(character.passive
+        ? [{ name: "Passive", value: `"${character.passive.name}" — ${character.passive.desc}` }]
+        : [{ name: "Lore", value: character.lore }]
+      ),
     ],
   };
 

@@ -1,0 +1,114 @@
+[
+  {
+    "id": "halls_of_ice",
+    "name": "Halls of Ice",
+    "description": "Ancient frost slows non-Ice characters",
+    "effects": [
+      { "type": "ApplyDebuffIf", "debuff": "speed_down", "valuePct": 0.15, "durationTurns": 2, "condition": { "actor_element_not": "Ice" }, "target": "all" }
+    ]
+  },
+  {
+    "id": "fields_of_valor",
+    "name": "Fields of Valor", 
+    "description": "Warriors gain strength in this proving ground",
+    "effects": [
+      { "type": "TeamBuffIf", "stat": "ATK", "valuePct": 0.10, "durationTurns": 5, "condition": { "actor_class": "Warrior" } }
+    ]
+  },
+  {
+    "id": "caustic_swamp",
+    "name": "Caustic Swamp",
+    "description": "Poisonous vapors affect all combatants", 
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "poison", "durationTurns": 3, "target": "all" }
+    ]
+  },
+  {
+    "id": "withering_wastes",
+    "name": "Withering Wastes",
+    "description": "Desert winds weaken enemy defenses",
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "defense_down", "valuePct": 0.20, "durationTurns": 2, "target": "enemies" }
+    ]
+  },
+  {
+    "id": "blinding_sands", 
+    "name": "Blinding Sands",
+    "description": "Sand storms reduce accuracy for non-Fire allies",
+    "effects": [
+      { "type": "ApplyDebuffIf", "debuff": "attack_down", "valuePct": 0.15, "durationTurns": 3, "condition": { "actor_element_not": "Fire" }, "target": "all" }
+    ]
+  },
+  {
+    "id": "sacred_grove",
+    "name": "Sacred Grove", 
+    "description": "Norse spirits provide protection to their kin",
+    "effects": [
+      { "type": "TeamBuffIf", "stat": "HP", "valuePct": 0.10, "condition": { "pantheon": "Norse" } }
+    ]
+  },
+  {
+    "id": "magebane_field",
+    "name": "Magebane Field",
+    "description": "Anti-magic field weakens spellcasters",
+    "effects": [
+      { "type": "ApplyDebuffIf", "debuff": "attack_down", "valuePct": 0.20, "durationTurns": 2, "condition": { "actor_class": "Mage" }, "target": "all" }
+    ]
+  },
+  {
+    "id": "vortex_of_shadows",
+    "name": "Vortex of Shadows",
+    "description": "Dark energies drain life from non-Dark beings", 
+    "effects": [
+      { "type": "ApplyDebuffIf", "debuff": "bleed", "durationTurns": 2, "condition": { "actor_element_not": "Dark" }, "target": "all" }
+    ]
+  },
+  {
+    "id": "shadows_blind",
+    "name": "Shadows Blind",
+    "description": "Underworld darkness reduces visibility",
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "accuracy_down", "valuePct": 0.25, "durationTurns": 2, "target": "all" }
+    ]
+  },
+  {
+    "id": "searing_heat", 
+    "name": "Searing Heat",
+    "description": "Forge fire burns those without resistance",
+    "effects": [
+      { "type": "ApplyDebuffIf", "debuff": "burn", "durationTurns": 2, "condition": { "actor_element_not": "Fire" }, "target": "all" }
+    ]
+  },
+  {
+    "id": "venomous_haze",
+    "name": "Venomous Haze", 
+    "description": "Serpent toxins poison the air",
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "poison", "durationTurns": 3, "target": "all" }
+    ]
+  },
+  {
+    "id": "monstrous_aura",
+    "name": "Monstrous Aura",
+    "description": "Primal fear reduces combat effectiveness",
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "all_stats_down", "valuePct": 0.10, "durationTurns": 2, "target": "all" }
+    ]
+  },
+  {
+    "id": "raging_storm",
+    "name": "Raging Storm", 
+    "description": "Lightning strikes randomly during battle",
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "accuracy_down", "valuePct": 0.20, "durationTurns": 3, "target": "all" }
+    ]
+  },
+  {
+    "id": "hall_of_mirrors",
+    "name": "Hall of Mirrors",
+    "description": "Illusions confuse and misdirect attacks", 
+    "effects": [
+      { "type": "ApplyDebuff", "debuff": "accuracy_down", "valuePct": 0.30, "durationTurns": 2, "target": "all" }
+    ]
+  }
+]

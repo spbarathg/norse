@@ -14,7 +14,9 @@ import {
   TextInputStyle,
   InteractionReplyOptions,
   APIEmbedField,
-  ModalSubmitInteraction
+  ModalSubmitInteraction,
+  AutocompleteInteraction,
+  Colors
 } from "discord.js";
 import { performDrop } from "../engines/drop.js";
 import { startMission, claimMission } from "../engines/missions.js";
@@ -27,8 +29,8 @@ import {
   getUserTrades,
   cleanupExpiredTrades
 } from "../engines/trade.js";
-import { checkAndNotifyAchievements, getUserAchievements } from "../engines/achievements";
-import { getLeaderboardsEmbed } from "../engines/leaderboard";
+import { checkAndNotifyAchievements, getUserAchievements } from "../engines/achievements.js";
+import { getLeaderboardsEmbed } from "../engines/leaderboard.js";
 import {
   handleTradeOffer,
   handleTradeList,
@@ -45,9 +47,120 @@ import {
 import { createRequire } from "module";
 
 const require = createRequire(import.meta.url);
+const emojiMap = require("../config/emoji_map.json");
+
+// Enhanced autocomplete handler for modern Discord features
+export async function handleAutocomplete(interaction: AutocompleteInteraction) {
+  try {
+    const { commandName, options } = interaction;
+    const focusedOption = options.getFocused(true);
+    const prisma = getPrisma();
+    const characters = require("../../data/allgodschars.json");
+    
+    let choices: { name: string; value: string }[] = [];
+
+    // Character name autocomplete
+    if (focusedOption.name === 'character' || focusedOption.name === 'name') {
+      const filtered = characters
+        .filter((char: any) => 
+          char.name.toLowerCase().includes(focusedOption.value.toLowerCase())
+        )
+        .slice(0, 25)
+        .map((char: any) => ({
+          name: `${emojiMap[char.slug] || '⭐'} ${char.name} (${char.rarity}-Tier ${char.pantheon})`,
+          value: char.name
+        }));
+      choices = filtered;
+    }
+
+    // Relic ID autocomplete (fetch all user's relics, sort by rarity, filter by query)
+    if (focusedOption.name === 'relic' || focusedOption.name === 'relic_id' || focusedOption.name === 'relic_ids') {
+      try {
+        const userId = interaction.user.id;
+        const query = String(focusedOption.value || '').toLowerCase();
+        const rarityRank: Record<string, number> = { S: 0, A: 1, B: 2, C: 3 };
+
+        const relics = await prisma.relic.findMany({
+          where: { ownerUserId: userId },
+          select: { id: true, rarity: true, characterId: true, birthRealTs: true }
+        });
+
+        const enriched = relics.map((relic: any) => {
+          const char = characters.find((c: any) => c.id === relic.characterId);
+          return { relic, char };
+        });
+
+        const filtered = enriched.filter(({ relic, char }) => {
+          if (!query) return true;
+          return relic.id.toLowerCase().includes(query) || (char?.name?.toLowerCase()?.includes(query) ?? false);
+        });
+
+        filtered.sort((a, b) => {
+          const ar = rarityRank[a.relic.rarity] ?? 9;
+          const br = rarityRank[b.relic.rarity] ?? 9;
+          if (ar !== br) return ar - br; // rarer first
+          const at = new Date(a.relic.birthRealTs).getTime();
+          const bt = new Date(b.relic.birthRealTs).getTime();
+          return bt - at; // newer first within same rarity
+        });
+
+        choices = filtered.slice(0, 25).map(({ relic, char }) => {
+          const emoji = char ? (emojiMap[char.slug] || '⭐') : '⭐';
+          const labelName = char?.name || 'Unknown';
+          return {
+            name: `${emoji} ${labelName} (${relic.rarity}) - ${relic.id}`,
+            value: relic.id
+          };
+        });
+      } catch (error) {
+        console.error('Autocomplete error:', error);
+      }
+    }
+
+    // Gauntlet autocomplete
+    if (focusedOption.name === 'gauntlet') {
+      try {
+        const gauntlets = require("../config/gauntlets.json");
+        choices = gauntlets
+          .filter((g: any) => 
+            g.name.toLowerCase().includes(focusedOption.value.toLowerCase())
+          )
+          .slice(0, 25)
+          .map((g: any) => ({
+            name: `${g.name} (Difficulty: ${g.difficulty})`,
+            value: g.id
+          }));
+      } catch (error) {
+        console.error('Gauntlet autocomplete error:', error);
+      }
+    }
+
+    await interaction.respond(choices);
+  } catch (error) {
+    console.error('Autocomplete handler error:', error);
+    await interaction.respond([]);
+  }
+}
 
 export const commandBuilders = [
-  new SlashCommandBuilder().setName("drop").setDescription("Summon a new Living Relic"),
+  new SlashCommandBuilder()
+    .setName("drop")
+    .setDescription("🎲 Summon a random mythological character to your collection")
+    .addStringOption(option => 
+      option.setName("era")
+        .setDescription("🏛️ Choose which pantheon to summon from")
+        .setRequired(false)
+        .addChoices(
+          { name: "🌍 All Pantheons", value: "all" },
+          { name: "🏛️ Greco-Roman Gods", value: "greco-roman" },
+          { name: "⚡ Norse Gods", value: "norse" }
+        )
+    )
+    .addBooleanOption(option =>
+      option.setName("private")
+        .setDescription("🔒 Make this response visible only to you")
+        .setRequired(false)
+    ),
   new SlashCommandBuilder()
     .setName("missions")
     .setDescription("Missions operations")
@@ -96,7 +209,24 @@ export const commandBuilders = [
   new SlashCommandBuilder()
     .setName("collection")
     .setDescription("View your relics")
-    .addIntegerOption((o) => o.setName("page").setDescription("Page").setRequired(false)),
+    .addIntegerOption((o) => o.setName("page").setDescription("Page").setRequired(false))
+    .addStringOption((o) =>
+      o
+        .setName("sort")
+        .setDescription("Sorting")
+        .setRequired(false)
+        .addChoices(
+          { name: "Rarest → Common", value: "rarity_desc" },
+          { name: "Common → Rarest", value: "rarity_asc" },
+          { name: "Newest", value: "newest" },
+          { name: "Oldest", value: "oldest" },
+          { name: "Highest XP", value: "xp_desc" },
+          { name: "Highest Durability", value: "durability_desc" },
+          { name: "Name A→Z", value: "name_asc" },
+          { name: "Best (Battle)", value: "best" },
+          { name: "Worst (Battle)", value: "worst" }
+        )
+    ),
   new SlashCommandBuilder()
     .setName("view")
     .setDescription("View a relic")
@@ -126,8 +256,162 @@ export const commandBuilders = [
     .addUserOption((o) => o.setName("player").setDescription("Player to view").setRequired(false))
     .addIntegerOption((o) => o.setName("page").setDescription("Collection page").setRequired(false)),
   new SlashCommandBuilder()
+    .setName("shrine")
+    .setDescription("🏛️ Manage your sacred team shrine and battle formations")
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("view")
+        .setDescription("👁️ View your current shrine configuration")
+        .addBooleanOption(option =>
+          option.setName("private")
+            .setDescription("🔒 Make this response visible only to you")
+            .setRequired(false)
+        )
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("setup")
+        .setDescription("⚙️ Interactive shrine setup wizard")
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("set")
+        .setDescription("📍 Place a character in a specific shrine position")
+        .addStringOption(option => 
+          option.setName("position")
+            .setDescription("🎯 Choose formation position")
+            .setRequired(true)
+            .addChoices(
+              { name: "🗡️ Front Left (Tank)", value: "FL" },
+              { name: "⚔️ Front Right (DPS)", value: "FR" },
+              { name: "🛡️ Back Left (Support)", value: "BL" },
+              { name: "🏹 Back Right (Range)", value: "BR" }
+            )
+        )
+        .addStringOption(option => 
+          option.setName("relic")
+            .setDescription("🎭 Relic ID to place (use autocomplete)")
+            .setRequired(true)
+            .setAutocomplete(true)
+        )
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("align")
+        .setDescription("⚖️ Set your pantheon alignment for team bonuses")
+        .addStringOption(option => 
+          option.setName("pantheon")
+            .setDescription("🏛️ Choose your divine alignment")
+            .setRequired(true)
+            .addChoices(
+              { name: "⚡ Norse (+10% HP, +5% DEF)", value: "Norse" },
+              { name: "🏛️ Greco-Roman (+10% ATK, +5% SPD)", value: "Greco-Roman" }
+            )
+        )
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("effigy")
+        .setDescription("🏺 Equip powerful effigies for specialized team bonuses")
+        .addStringOption(option => 
+          option.setName("effigy_id")
+            .setDescription("🏺 Choose your effigy")
+            .setRequired(true)
+            .addChoices(
+              { name: "⚔️ Warrior's Effigy (+12% ATK to Warriors)", value: "warriors_effigy" },
+              { name: "🧙‍♂️ Mage's Effigy (+12% ATK to Mages)", value: "mages_effigy" },
+              { name: "🛡️ Guardian's Effigy (+12% DEF to Guardians)", value: "guardians_effigy" },
+              { name: "🗡️ Rogue's Effigy (+12% SPD to Rogues)", value: "rogues_effigy" },
+              { name: "🔥 Fire Effigy (+10% ATK to Fire)", value: "fire_effigy" },
+              { name: "❄️ Ice Effigy (+10% DEF to Ice)", value: "ice_effigy" },
+              { name: "💧 Water Effigy (+10% HP to Water)", value: "water_effigy" },
+              { name: "☀️ Light Effigy (+10% SPD to Light)", value: "light_effigy" },
+              { name: "🌑 Dark Effigy (+10% ATK to Dark)", value: "dark_effigy" },
+              { name: "🌿 Nature Effigy (+10% HP to Nature)", value: "nature_effigy" }
+            )
+        )
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("clear")
+        .setDescription("🧹 Remove a character from shrine position")
+        .addStringOption(option => 
+          option.setName("position")
+            .setDescription("📍 Position to clear")
+            .setRequired(true)
+            .addChoices(
+              { name: "🗡️ Front Left", value: "FL" },
+              { name: "⚔️ Front Right", value: "FR" },
+              { name: "🛡️ Back Left", value: "BL" },
+              { name: "🏹 Back Right", value: "BR" },
+              { name: "🧹 Clear All Positions", value: "ALL" }
+            )
+        )
+    ),
+  new SlashCommandBuilder()
+    .setName("gauntlet")
+    .setDescription("🏁 Face challenging gauntlet scenarios with unique hazards")
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("browse")
+        .setDescription("🗺️ Explore available gauntlet challenges")
+        .addBooleanOption(option =>
+          option.setName("private")
+            .setDescription("🔒 Make this response visible only to you")
+            .setRequired(false)
+        )
+    )
+    .addSubcommand(subcommand =>
+      subcommand
+        .setName("start")
+        .setDescription("🚀 Begin an epic gauntlet challenge")
+        .addStringOption(option =>
+          option.setName("gauntlet")
+            .setDescription("🏁 Choose your challenge")
+            .setRequired(false)
+            .setAutocomplete(true)
+        )
+        .addIntegerOption(option => 
+          option.setName("difficulty")
+            .setDescription("🎯 Challenge intensity")
+            .setRequired(false)
+            .addChoices(
+              { name: "😊 Novice (Level 1)", value: 1 },
+              { name: "🙂 Apprentice (Level 2)", value: 2 },
+              { name: "😐 Veteran (Level 3)", value: 3 },
+              { name: "😤 Expert (Level 4)", value: 4 },
+              { name: "😈 Legendary (Level 5)", value: 5 }
+            )
+        )
+        .addBooleanOption(option =>
+          option.setName("detailed")
+            .setDescription("📊 Show detailed challenge information")
+            .setRequired(false)
+        )
+    ),
+  new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("Show community leaderboards"),
+  new SlashCommandBuilder()
+    .setName("battle")
+    .setDescription("⚔️ Challenge enemies in epic turn-based combat")
+    .addIntegerOption(option => 
+      option.setName("difficulty")
+        .setDescription("🎯 Battle difficulty level")
+        .setRequired(false)
+        .addChoices(
+          { name: "😊 Novice (Level 1)", value: 1 },
+          { name: "🙂 Apprentice (Level 2)", value: 2 },
+          { name: "😐 Veteran (Level 3)", value: 3 },
+          { name: "😤 Expert (Level 4)", value: 4 },
+          { name: "😈 Legendary (Level 5)", value: 5 }
+        )
+    )
+    .addBooleanOption(option =>
+      option.setName("detailed")
+        .setDescription("📊 Show detailed battle statistics")
+        .setRequired(false)
+    ),
   new SlashCommandBuilder()
     .setName("trade")
     .setDescription("Trading operations")
@@ -203,8 +487,10 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
 
   try {
     if (interaction.commandName === "drop") {
-      await interaction.deferReply(); // PUBLIC - everyone can see
-      const result = await performDrop({ userId });
+      const era = interaction.options.getString("era") || "all";
+      const isPrivate = interaction.options.getBoolean("private") ?? false;
+      await interaction.deferReply({ ephemeral: isPrivate });
+      const result = await performDrop({ userId, era });
       
       // Clean, minimalistic drop embed
       const dropEmbed = new EmbedBuilder()
@@ -355,7 +641,8 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
     if (interaction.commandName === "collection") {
       await interaction.deferReply(); // PUBLIC - show your collection
       const page = interaction.options.getInteger("page") || 1;
-      await showCollectionPage(interaction, userId, page);
+      const sort = interaction.options.getString("sort") || "rarity_desc";
+      await showCollectionPage(interaction, userId, page, { search: "", sort });
       return;
     }
 
@@ -509,6 +796,39 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    if (interaction.commandName === "battle") {
+      const { handleBattleCommand } = await import("./battleHandlers.js");
+      await handleBattleCommand(interaction);
+      return;
+    }
+
+    if (interaction.commandName === "shrine") {
+      const sub = interaction.options.getSubcommand();
+      const { 
+        handleShrineView, 
+        handleShrineSet, 
+        handleShrineAlignment, 
+        handleShrineEffigy, 
+        handleShrineSetup,
+        handleShrineClear 
+      } = await import("./shrineHandlers.js");
+      if (sub === 'view') return void (await handleShrineView(interaction));
+      if (sub === 'setup') return void (await handleShrineSetup(interaction));
+      if (sub === 'set') return void (await handleShrineSet(interaction));
+      if (sub === 'align') return void (await handleShrineAlignment(interaction));
+      if (sub === 'effigy') return void (await handleShrineEffigy(interaction));
+      if (sub === 'clear') return void (await handleShrineClear(interaction));
+      return;
+    }
+
+    if (interaction.commandName === "gauntlet") {
+      const sub = interaction.options.getSubcommand();
+      const { handleGauntletBrowse, handleGauntletStart } = await import("./gauntletHandlers.js");
+      if (sub === 'browse') return void (await handleGauntletBrowse(interaction));
+      if (sub === 'start') return void (await handleGauntletStart(interaction));
+      return;
+    }
+
     if (interaction.commandName === "trade") {
       const sub = interaction.options.getSubcommand();
       
@@ -601,27 +921,84 @@ function getRarityColor(rarity: string): number {
 }
 
 // Interactive collection display with pagination
-async function showCollectionPage(interaction: ChatInputCommandInteraction | ButtonInteraction, userId: string, page: number) {
+type CollectionView = { search: string; sort: string };
+
+async function showCollectionPage(
+  interaction: ChatInputCommandInteraction | ButtonInteraction,
+  userId: string,
+  page: number,
+  view: CollectionView = { search: "", sort: "rarity_desc" }
+) {
   const prisma = getPrisma();
   const pageSize = 4;
   const skip = (page - 1) * pageSize;
-  
-  const [relics, totalCount] = await Promise.all([
-    prisma.relic.findMany({ 
-      where: { ownerUserId: userId }, 
-      orderBy: { birthRealTs: "desc" }, 
-      skip, 
-      take: pageSize 
-    }),
-    prisma.relic.count({ where: { ownerUserId: userId } })
-  ]);
+  const characters = require("../../data/allgodschars.json");
+
+  const allRelics = await prisma.relic.findMany({ where: { ownerUserId: userId } });
+
+  const enriched = allRelics.map((r: any) => ({
+    relic: r,
+    char: characters.find((c: any) => c.id === r.characterId)
+  }));
+
+  const searchLower = (view.search || "").toLowerCase();
+  const filtered = enriched.filter(({ relic, char }) => {
+    if (!searchLower) return true;
+    return relic.id.toLowerCase().includes(searchLower) || (char?.name?.toLowerCase()?.includes(searchLower) ?? false);
+  });
+
+  const rarityRank: Record<string, number> = { S: 0, A: 1, B: 2, C: 3 };
+
+  // Battle score heuristic for best/worst sorting
+  const battleScore = (r: any, ch: any) => {
+    const stats = JSON.parse(r.currentStats || "{}");
+    const hp = Number(stats.hp || ch?.hp || 0);
+    const atk = Number(stats.atk || ch?.atk || 0);
+    const def = Number(stats.def || ch?.def || 0);
+    const spd = Number(stats.spd || ch?.spd || 0);
+    const rarityMultMap: Record<string, number> = { S: 1.3, A: 1.15, B: 1.0, C: 0.9 };
+    const rarityMult = rarityMultMap[r.rarity as keyof typeof rarityMultMap] ?? 1.0;
+    const dur = Number(r.durabilityPct || 0) / 100;
+    return Math.round(((hp * 0.35 + atk * 0.4 + def * 0.2 + spd * 0.05) * rarityMult) * (0.7 + 0.3 * dur) + r.xp * 0.2);
+  };
+
+  filtered.sort((a, b) => {
+    const va = a.relic; const vb = b.relic; const ca = a.char; const cb = b.char;
+    switch (view.sort) {
+      case "rarity_asc":
+        // Common → Rarest: higher rank number first (C=3 ... S=0)
+        return (rarityRank[vb.rarity] ?? 9) - (rarityRank[va.rarity] ?? 9);
+      case "rarity_desc":
+        return (rarityRank[va.rarity] ?? 9) - (rarityRank[vb.rarity] ?? 9);
+      case "oldest":
+        return new Date(va.birthRealTs).getTime() - new Date(vb.birthRealTs).getTime();
+      case "newest":
+        return new Date(vb.birthRealTs).getTime() - new Date(va.birthRealTs).getTime();
+      case "xp_desc":
+        return vb.xp - va.xp;
+      case "durability_desc":
+        return vb.durabilityPct - va.durabilityPct;
+      case "name_asc":
+        return String(ca?.name || va.id).localeCompare(String(cb?.name || vb.id));
+      case "best":
+        return battleScore(vb, cb) - battleScore(va, ca);
+      case "worst":
+        return battleScore(va, ca) - battleScore(vb, cb);
+      default:
+        // Default to rarity_desc, then newest within the same rarity
+        return ((rarityRank[va.rarity] ?? 9) - (rarityRank[vb.rarity] ?? 9)) || (new Date(vb.birthRealTs).getTime() - new Date(va.birthRealTs).getTime());
+    }
+  });
+
+  const totalCount = filtered.length;
+  const pageItems = filtered.slice(skip, skip + pageSize);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
-  if (relics.length === 0) {
+  if (pageItems.length === 0) {
     const embed = new EmbedBuilder()
       .setTitle("📚 Your Relic Collection")
-      .setDescription("No relics found. Use `/drop` to summon your first relic!")
+      .setDescription(view.search ? `No relics found for "${view.search}"` : "No relics found. Use `/drop` to summon your first relic!")
       .setColor(0x95A5A6);
     
     await interaction.editReply({ embeds: [embed] });
@@ -631,21 +1008,22 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction | But
   // Create collection embed
   const embed = new EmbedBuilder()
     .setTitle(`📚 Your Relic Collection`)
-    .setDescription(`**Page ${page} of ${totalPages}** • Showing ${relics.length} of ${totalCount} relics\n⠀`)
+    .setDescription(`**Page ${page} of ${totalPages}** • Showing ${pageItems.length} of ${totalCount} relics\n⠀`)
     .setColor(0x3498DB)
     .setTimestamp();
 
   // Add relic fields in vertical format with spacing
-  relics.forEach((relic, index) => {
+  pageItems.forEach(({ relic, char }, index) => {
     const rarityEmoji = getRarityEmoji(relic.rarity);
+    const icon = char ? (emojiMap[char.slug] || '🔹') : '🔹';
     embed.addFields({
-      name: `${rarityEmoji} **\`${relic.id}\`**`,
-      value: `${getRarityName(relic.rarity)} • ${relic.durabilityPct.toFixed(1)}% HP • ${relic.evolutionStage} • ${relic.xp.toLocaleString()} XP`,
+      name: `${icon} ${rarityEmoji} **\`${relic.id}\`**`,
+      value: `${char ? char.name + ' • ' : ''}${getRarityName(relic.rarity)} • ${relic.durabilityPct.toFixed(1)}% HP • ${relic.evolutionStage} • ${relic.xp.toLocaleString()} XP`,
       inline: false
     });
 
     // Add spacing between relics (except after the last one)
-    if (index < relics.length - 1) {
+    if (index < pageItems.length - 1) {
       embed.addFields({ name: "⠀", value: "⠀", inline: false });
     }
   });
@@ -656,18 +1034,20 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction | But
   if (page > 1) {
     navigationRow.addComponents(
       new ButtonBuilder()
-        .setCustomId(`collection_page_${page - 1}`)
+        .setCustomId(`collection_page_${page - 1}_${encodeURIComponent(view.search || '')}_${view.sort}`)
         .setLabel('⬅️ Previous')
         .setStyle(ButtonStyle.Secondary)
     );
   }
 
-  navigationRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId('collection_page_1')
-      .setLabel('⏮️ First')
-      .setStyle(ButtonStyle.Secondary)
-  );
+  if (totalPages > 1 && page > 2) {
+    navigationRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`collection_page_1_${encodeURIComponent(view.search || '')}_${view.sort}`)
+        .setLabel('⏮️ First')
+        .setStyle(ButtonStyle.Secondary)
+    );
+  }
 
   navigationRow.addComponents(
     new ButtonBuilder()
@@ -679,18 +1059,20 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction | But
   if (page < totalPages) {
     navigationRow.addComponents(
       new ButtonBuilder()
-        .setCustomId(`collection_page_${page + 1}`)
+        .setCustomId(`collection_page_${page + 1}_${encodeURIComponent(view.search || '')}_${view.sort}`)
         .setLabel('Next ➡️')
         .setStyle(ButtonStyle.Secondary)
     );
   }
 
-  navigationRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId(`collection_page_${totalPages}`)
-      .setLabel('Last ⏭️')
-      .setStyle(ButtonStyle.Secondary)
-  );
+  if (totalPages > 1 && page < totalPages - 1) {
+    navigationRow.addComponents(
+      new ButtonBuilder()
+        .setCustomId(`collection_page_${totalPages}_${encodeURIComponent(view.search || '')}_${view.sort}`)
+        .setLabel('Last ⏭️')
+        .setStyle(ButtonStyle.Secondary)
+    );
+  }
 
   // Quick actions row
   const actionsRow = new ActionRowBuilder<StringSelectMenuBuilder>()
@@ -698,15 +1080,33 @@ async function showCollectionPage(interaction: ChatInputCommandInteraction | But
       new StringSelectMenuBuilder()
         .setCustomId('relic_quick_action')
         .setPlaceholder('Choose a relic to view...')
-        .addOptions(relics.map(relic => ({
+        .addOptions(pageItems.map(({ relic }) => ({
           label: `${getRarityEmoji(relic.rarity)} ${relic.id}`,
           description: `${relic.rarity} • ${relic.evolutionStage} • ${relic.durabilityPct.toFixed(1)}%`,
           value: `view_${relic.id}`
         })))
     );
 
-  const components: ActionRowBuilder<any>[] = [navigationRow];
-  if (relics.length > 0) {
+  // Sort/select controls
+  const controlsRow = new ActionRowBuilder<any>().addComponents(
+    new (require('discord.js').StringSelectMenuBuilder)()
+      .setCustomId('collection_sort')
+      .setPlaceholder('Sort')
+      .addOptions([
+        { label: 'Rarest → Common', value: 'rarity_desc', default: view.sort === 'rarity_desc' },
+        { label: 'Common → Rarest', value: 'rarity_asc', default: view.sort === 'rarity_asc' },
+        { label: 'Newest', value: 'newest', default: view.sort === 'newest' },
+        { label: 'Oldest', value: 'oldest', default: view.sort === 'oldest' },
+        { label: 'Highest XP', value: 'xp_desc', default: view.sort === 'xp_desc' },
+        { label: 'Highest Durability', value: 'durability_desc', default: view.sort === 'durability_desc' },
+        { label: 'Name A→Z', value: 'name_asc', default: view.sort === 'name_asc' },
+        { label: 'Best (Battle)', value: 'best', default: view.sort === 'best' },
+        { label: 'Worst (Battle)', value: 'worst', default: view.sort === 'worst' },
+      ])
+  );
+
+  const components: ActionRowBuilder<any>[] = [controlsRow, navigationRow];
+  if (pageItems.length > 0) {
     components.push(actionsRow);
   }
 
@@ -773,7 +1173,9 @@ async function buildUserProfileEmbed(viewUserId: string, interaction: ChatInputC
   if (relic) {
     const baseUrl = process.env.CDN_BASE_URL || 'http://localhost:3000/cdn';
     const portraitUrl = `${baseUrl}/portraits/${character?.slug || 'odin'}.png`;
-    embed.setDescription(`Featured Relic: ${character ? `${character.name} (${relic.rarity}) — ${character.class}, ${character.element}` : `Relic ${relic.id}`}\nPassive: ${character ? `"${character.passive_ability_name}" — ${character.passive_ability_desc}` : '—'}`);
+    const subtitle = character ? `${character.name} (${relic.rarity}) — ${character.class}, ${character.element}` : `Relic ${relic.id}`;
+    const detail = character?.passive?.name ? `Passive: "${character.passive.name}" — ${character.passive.desc}` : (character?.lore ? `Lore: ${character.lore}` : '');
+    embed.setDescription(`Featured Relic: ${subtitle}${detail ? `\n${detail}` : ''}`);
     if (baseUrl) embed.setImage(portraitUrl);
   } else {
     embed.setDescription(isSelf ? 'Use the button below to choose a Featured Relic.' : 'No featured relic set.');
@@ -841,16 +1243,24 @@ async function buildPlayerCollectionEmbed(targetUserId: string, targetUsername: 
   const navigationRow = new ActionRowBuilder<ButtonBuilder>();
   if (page > 1) {
     navigationRow.addComponents(
-      new ButtonBuilder().setCustomId(`profcol_first_${targetUserId}`).setLabel('⏮️ First').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`profcol_prev_${targetUserId}_${page - 1}`).setLabel('⬅️ Previous').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`profcol_prev_${targetUserId}_${page - 1}`).setLabel('⬅️ Previous').setStyle(ButtonStyle.Secondary)
     );
+    if (totalPages > 1) {
+      navigationRow.addComponents(
+        new ButtonBuilder().setCustomId(`profcol_first_${targetUserId}`).setLabel('⏮️ First').setStyle(ButtonStyle.Secondary)
+      );
+    }
   }
   navigationRow.addComponents(new ButtonBuilder().setCustomId(`profcol_refresh_${targetUserId}_${page}`).setLabel('🔄 Refresh').setStyle(ButtonStyle.Secondary));
   if (page < totalPages) {
     navigationRow.addComponents(
-      new ButtonBuilder().setCustomId(`profcol_next_${targetUserId}_${page + 1}`).setLabel('Next ➡️').setStyle(ButtonStyle.Secondary),
-      new ButtonBuilder().setCustomId(`profcol_last_${targetUserId}`).setLabel('Last ⏭️').setStyle(ButtonStyle.Secondary),
+      new ButtonBuilder().setCustomId(`profcol_next_${targetUserId}_${page + 1}`).setLabel('Next ➡️').setStyle(ButtonStyle.Secondary)
     );
+    if (totalPages > 1) {
+      navigationRow.addComponents(
+        new ButtonBuilder().setCustomId(`profcol_last_${targetUserId}`).setLabel('Last ⏭️').setStyle(ButtonStyle.Secondary)
+      );
+    }
   }
 
   return { embed, components: [navigationRow] as any };
@@ -874,12 +1284,41 @@ async function presentFeaturedRelicSelector(interaction: ButtonInteraction, user
 
 // Handle button and select menu interactions
 export async function handleComponentInteraction(interaction: ButtonInteraction | StringSelectMenuInteraction | ModalSubmitInteraction) {
+  // Battle step buttons are handled by message collectors inside battleHandlers.
+  // Ignore them here to avoid double acknowledgements and 40060 errors.
+  if (interaction.isButton()) {
+    const id = interaction.customId;
+    if (id.startsWith('battle_act_') || id.startsWith('battle_skip_') || id.startsWith('battle_start_') || id.startsWith('battle_preview_') || id.startsWith('battle_cancel_')) {
+      return;
+    }
+  }
   const userId = interaction.user.id;
   const prisma = getPrisma();
 
   try {
     if (interaction.isButton()) {
       const customId = interaction.customId;
+
+      // Shrine button interactions
+      if (customId.startsWith('shrine_')) {
+        const { handleShrineButtonInteraction } = await import("./shrineHandlers.js");
+        await handleShrineButtonInteraction(interaction);
+        return;
+      }
+
+      // Post-battle buttons route to battleHandlers; step buttons are ignored above
+      if (customId.startsWith('battle_')) {
+        const { handleBattleButtonInteraction } = await import("./battleHandlers.js");
+        await handleBattleButtonInteraction(interaction as ButtonInteraction);
+        return;
+      }
+
+      // Gauntlet button interactions
+      if (customId.startsWith('gauntlet_')) {
+        const { handleGauntletButtonInteraction } = await import("./gauntletInteractions.js");
+        await handleGauntletButtonInteraction(interaction);
+        return;
+      }
 
       // Drop another relic
       if (customId === 'drop_another') {
@@ -957,11 +1396,15 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
 
       // Collection pagination
       if (customId.startsWith('collection_page_')) {
-        const page = parseInt(customId.split('_')[2]);
+        const parts = customId.split('_');
+        const page = parseInt(parts[2]);
+        const search = decodeURIComponent(parts.slice(3, parts.length - 1).join('_')) || '';
+        const sort = parts[parts.length - 1] || 'rarity_desc';
         await interaction.deferUpdate();
-        await showCollectionPage(interaction, userId, page);
+        await showCollectionPage(interaction, userId, page, { search, sort });
         return;
       }
+      // Search removed per request
 
       // Collection refresh
       if (customId === 'collection_refresh') {
@@ -975,6 +1418,30 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         const relicId = customId.replace('view_relic_', '');
         await interaction.deferReply(); // PUBLIC - everyone can see
         await showGlobalRelicDetails(interaction, relicId);
+        return;
+      }
+
+      // Quick list relic for sale
+      if (customId.startsWith('market_list_')) {
+        const relicId = customId.replace('market_list_', '');
+        const modal = new ModalBuilder()
+          .setCustomId(`market_list_modal_${relicId}`)
+          .setTitle('List Relic for Sale');
+        const priceInput = new TextInputBuilder()
+          .setCustomId('price_gold')
+          .setLabel('Price in gold')
+          .setStyle(TextInputStyle.Short)
+          .setRequired(true);
+        const row = new ActionRowBuilder<TextInputBuilder>().addComponents(priceInput);
+        modal.addComponents(row);
+        await interaction.showModal(modal);
+        return;
+      }
+
+      // Mission with relic helper
+      if (customId.startsWith('mission_with_')) {
+        const relicId = customId.replace('mission_with_', '');
+        await interaction.reply({ content: `Use /missions start with relic_ids=${relicId} to send this relic on a mission.`, ephemeral: false });
         return;
       }
 
@@ -1131,6 +1598,19 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
 
     if (interaction.isStringSelectMenu()) {
       const customId = interaction.customId;
+      if (customId === 'collection_sort') {
+        await interaction.deferUpdate();
+        const sort = interaction.values[0] || 'rarity_desc';
+        await showCollectionPage(interaction as any, interaction.user.id, 1, { search: '', sort });
+        return;
+      }
+
+      // Gauntlet select menu
+      if (customId === 'gauntlet_select') {
+        const { handleGauntletSelectMenu } = await import("./gauntletInteractions.js");
+        await handleGauntletSelectMenu(interaction);
+        return;
+      }
 
       // Quick relic actions
       if (customId === 'relic_quick_action') {
@@ -1184,23 +1664,105 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
     }
 
     if (interaction.isModalSubmit()) {
+      // Handle shrine setup modal
+      if (interaction.customId === 'shrine_setup_modal') {
+        await handleShrineSetupModal(interaction);
+        return;
+      }
+      
       await handleTradeBuilderModal(interaction);
+      // Market list modal
+      if (interaction.customId.startsWith('market_list_modal_')) {
+        const relicId = interaction.customId.replace('market_list_modal_', '');
+        const priceStr = interaction.fields.getTextInputValue('price_gold');
+        const price = Math.max(0, parseInt(priceStr || '0', 10) || 0);
+        const prisma = getPrisma();
+        try {
+          const relic = await prisma.relic.findUnique({ where: { id: relicId } });
+          if (!relic || relic.ownerUserId !== interaction.user.id) {
+            await interaction.reply({ content: 'You do not own this relic.', ephemeral: false });
+            return;
+          }
+          const listing = await prisma.marketListing.create({ data: { relicId, priceGold: price, sellerUserId: interaction.user.id, status: 'active' } });
+          const embed = new EmbedBuilder()
+            .setTitle('💰 Listing Created')
+            .setDescription(`Relic \`${relicId}\` listed for ${price.toLocaleString()} gold (ID ${listing.id}).`)
+            .setColor(0xF39C12);
+          await interaction.reply({ embeds: [embed] });
+        } catch (e: any) {
+          await interaction.reply({ content: `Failed to create listing: ${e.message}`, ephemeral: false });
+        }
+        return;
+      }
       return;
     }
 
   } catch (error: any) {
     console.error('Component interaction error:', error);
+  }
+}
+
+// Handle shrine setup modal submission
+async function handleShrineSetupModal(interaction: ModalSubmitInteraction) {
+  try {
+    await interaction.deferReply({ ephemeral: true });
     
-    const reply = `Error: ${error.message || "Something went wrong"}`;
+    const userId = interaction.user.id;
+    const alignment = interaction.fields.getTextInputValue('alignment_input')?.trim();
+    const effigyId = interaction.fields.getTextInputValue('effigy_input')?.trim();
     
-    try {
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply(reply);
-    } else {
-      await interaction.reply({ content: reply, ephemeral: true });
+    // Update shrine with provided values
+    const prisma = getPrisma();
+    const user = await prisma.user.upsert({ 
+      where: { userId }, 
+      create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, 
+      update: {} 
+    });
+    
+    const mats = JSON.parse(user.materials || '{}');
+    const shrine = (mats.shrine || {}) as { layout?: any; alignment?: string; effigyId?: string };
+    shrine.layout = shrine.layout || {};
+    
+    let updates = [];
+    
+    if (alignment && (alignment.toLowerCase() === 'norse' || alignment.toLowerCase() === 'greco-roman')) {
+      const properAlignment = alignment.toLowerCase() === 'norse' ? 'Norse' : 'Greco-Roman';
+      shrine.alignment = properAlignment;
+      updates.push(`⚖️ Alignment: ${properAlignment}`);
     }
-    } catch (replyError) {
-      console.error("Failed to send error reply:", replyError);
+    
+    if (effigyId && effigyId.endsWith('_effigy')) {
+      shrine.effigyId = effigyId;
+      const effigyName = effigyId.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      updates.push(`🏺 Effigy: ${effigyName}`);
+    }
+    
+    mats.shrine = shrine;
+    await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify(mats) } });
+    
+    const successEmbed = new EmbedBuilder()
+      .setTitle('⚙️ Shrine Setup Complete!')
+      .setDescription(updates.length > 0 ? `Updated:\n${updates.join('\n')}` : 'No valid changes were made.')
+      .setColor(Colors.Green);
+      
+    const actionRow = new ActionRowBuilder<ButtonBuilder>()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('shrine_view_updated')
+          .setLabel('👁️ View Shrine')
+          .setStyle(ButtonStyle.Primary)
+      );
+    
+    await interaction.editReply({ embeds: [successEmbed], components: [actionRow] });
+    
+  } catch (error) {
+    console.error('Shrine modal error:', error);
+    
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ 
+        content: "❌ An error occurred setting up your shrine.", 
+        ephemeral: true 
+      });
     }
   }
 }
@@ -1240,12 +1802,17 @@ async function showRelicDetails(interaction: ButtonInteraction | StringSelectMen
 
   if (character) {
     embed.setDescription(`**${character.name}** • ${character.class} • ${character.element}\n⠀`);
-    embed.addFields(
+    const extraFields: any[] = [
       { name: "🏛️ Pantheon", value: character.pantheon, inline: true },
       { name: "⠀", value: "⠀", inline: true },
-      { name: "⠀", value: "⠀", inline: true },
-      { name: "⚔️ Passive Ability", value: `**"${character.passive_ability_name}"**\n${character.passive_ability_desc}`, inline: false }
-    );
+      { name: "⠀", value: "⠀", inline: true }
+    ];
+    if (character.passive && character.passive.name) {
+      extraFields.push({ name: "⚔️ Passive", value: `**${character.passive.name}**\n${character.passive.desc}`, inline: false });
+    } else if (character.lore) {
+      extraFields.push({ name: "📜 Lore", value: character.lore, inline: false });
+    }
+    embed.addFields(...extraFields);
 
     // Add character stats if available
     const stats = JSON.parse(relic.currentStats || "{}");
@@ -1310,9 +1877,9 @@ async function handleDailyReward(interaction: ChatInputCommandInteraction, userI
   const now = new Date();
   const today = now.toDateString();
   
-  // Check if user already claimed today
-  const lastClaimDate = user.updatedAt.toDateString();
+  // Daily claim tracking lives in materials to avoid false positives from other updates
   const materials = JSON.parse(user.materials || "{}");
+  const lastClaimDate: string | undefined = materials.lastDailyClaimDate;
   
   if (lastClaimDate === today) {
     const embed = new EmbedBuilder()
@@ -1341,10 +1908,10 @@ async function handleDailyReward(interaction: ChatInputCommandInteraction, userI
     return;
   }
 
-  // Calculate streak (simplified - consecutive days)
+  // Calculate streak (consecutive days based on last claim)
   const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
-  const wasYesterday = user.updatedAt.toDateString() === yesterday.toDateString();
+  const wasYesterday = lastClaimDate === yesterday.toDateString();
   
   // Get current streak from materials or start at 1
   let streak = wasYesterday ? (materials.streak || 1) + 1 : 1;
@@ -1367,12 +1934,13 @@ async function handleDailyReward(interaction: ChatInputCommandInteraction, userI
     updatedMaterials[key] = (updatedMaterials[key] || 0) + value;
   });
 
+  updatedMaterials.lastDailyClaimDate = today;
+
   await prisma.user.update({
     where: { userId },
     data: {
       gold: user.gold + goldReward,
-      materials: JSON.stringify(updatedMaterials),
-      updatedAt: now
+      materials: JSON.stringify(updatedMaterials)
     }
   });
 
@@ -1484,14 +2052,15 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction | B
         .setLabel('⬅️ Previous')
         .setStyle(ButtonStyle.Secondary)
     );
+    if (totalPages > 1) {
+      navigationRow.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`inspect_${targetUserId}_1`)
+          .setLabel('⏮️ First')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
   }
-
-  navigationRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId(`inspect_${targetUserId}_1`)
-      .setLabel('⏮️ First')
-      .setStyle(ButtonStyle.Secondary)
-  );
 
   navigationRow.addComponents(
     new ButtonBuilder()
@@ -1507,14 +2076,15 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction | B
         .setLabel('Next ➡️')
         .setStyle(ButtonStyle.Secondary)
     );
+    if (totalPages > 1 && page < totalPages - 1) {
+      navigationRow.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`inspect_${targetUserId}_${totalPages}`)
+          .setLabel('Last ⏭️')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
   }
-
-  navigationRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId(`inspect_${targetUserId}_${totalPages}`)
-      .setLabel('Last ⏭️')
-      .setStyle(ButtonStyle.Secondary)
-  );
 
   if (navigationRow.components.length > 0) {
     components.push(navigationRow);
@@ -1566,12 +2136,17 @@ async function showGlobalRelicDetails(interaction: ChatInputCommandInteraction |
 
   if (character) {
     embed.setDescription(`**${character.name}** • ${character.class} • ${character.element}\n⠀`);
-    embed.addFields(
+    const extraFields: any[] = [
       { name: "🏛️ Pantheon", value: character.pantheon, inline: true },
       { name: "⠀", value: "⠀", inline: true },
-      { name: "🔒 Status", value: relic.isLocked ? "🔒 Locked" : "✅ Available", inline: true },
-      { name: "⚔️ Passive Ability", value: `**"${character.passive_ability_name}"**\n${character.passive_ability_desc}`, inline: false }
-    );
+      { name: "🔒 Status", value: relic.isLocked ? "🔒 Locked" : "✅ Available", inline: true }
+    ];
+    if (character.passive && character.passive.name) {
+      extraFields.push({ name: "⚔️ Passive", value: `**${character.passive.name}**\n${character.passive.desc}`, inline: false });
+    } else if (character.lore) {
+      extraFields.push({ name: "📜 Lore", value: character.lore, inline: false });
+    }
+    embed.addFields(...extraFields);
 
     // Add character stats if available
     const stats = JSON.parse(relic.currentStats || "{}");
@@ -1683,14 +2258,15 @@ async function showCharacterDatabase(interaction: ChatInputCommandInteraction | 
         .setLabel('⬅️ Previous')
         .setStyle(ButtonStyle.Secondary)
     );
+    if (totalPages > 1 && page > 2) {
+      navigationRow.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`lookup_page_${searchTerm || 'all'}_1`)
+          .setLabel('⏮️ First')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
   }
-
-  navigationRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId(`lookup_page_${searchTerm || 'all'}_1`)
-      .setLabel('⏮️ First')
-      .setStyle(ButtonStyle.Secondary)
-  );
 
   navigationRow.addComponents(
     new ButtonBuilder()
@@ -1706,14 +2282,15 @@ async function showCharacterDatabase(interaction: ChatInputCommandInteraction | 
         .setLabel('Next ➡️')
         .setStyle(ButtonStyle.Secondary)
     );
+    if (totalPages > 1 && page < totalPages - 1) {
+      navigationRow.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`lookup_page_${searchTerm || 'all'}_${totalPages}`)
+          .setLabel('Last ⏭️')
+          .setStyle(ButtonStyle.Secondary)
+      );
+    }
   }
-
-  navigationRow.addComponents(
-    new ButtonBuilder()
-      .setCustomId(`lookup_page_${searchTerm || 'all'}_${totalPages}`)
-      .setLabel('Last ⏭️')
-      .setStyle(ButtonStyle.Secondary)
-  );
 
   if (navigationRow.components.length > 0) {
     components.push(navigationRow);

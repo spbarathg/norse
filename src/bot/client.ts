@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits, REST, Routes } from "discord.js";
 import { performDrop } from "../engines/drop.js";
-import { commandBuilders, handleCommand, handleComponentInteraction } from "./commands.js";
+import { commandBuilders, handleCommand, handleComponentInteraction, handleAutocomplete } from "./commands.js";
 
 export function createClient() {
   const client = new Client({ intents: [GatewayIntentBits.Guilds] });
@@ -15,6 +15,12 @@ export function createClient() {
     if (interaction.isChatInputCommand()) {
       console.log("Processing chat input command:", interaction.commandName);
       await handleCommand(interaction);
+      return;
+    }
+
+    if (interaction.isAutocomplete()) {
+      console.log("Processing autocomplete:", interaction.commandName, interaction.options.getFocused(true));
+      await handleAutocomplete(interaction);
       return;
     }
 

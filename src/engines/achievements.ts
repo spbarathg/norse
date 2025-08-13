@@ -124,8 +124,7 @@ export async function checkAndNotifyAchievements(interaction: AnyInteraction, us
 
     const row = new ActionRowBuilder<ButtonBuilder>()
       .addComponents(
-        new ButtonBuilder().setCustomId("ach_view_profile").setLabel("View Profile").setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder().setCustomId("ach_share_public").setLabel("Share to Channel").setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId("ach_view_profile").setLabel("View Profile").setStyle(ButtonStyle.Secondary)
       );
 
     if (interaction.deferred || interaction.replied) {

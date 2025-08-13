@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node -e \"const fs=require('fs'),path=require('path');const mk=(p)=>{try{fs.mkdirSync(p,{recursive:true})}catch{} };mk('dist/config');mk('dist/data');fs.cpSync(path.join('src','config'),'dist/config',{recursive:true});fs.cpSync('data','dist/data',{recursive:true});\"",
     "start": "node dist/index.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",

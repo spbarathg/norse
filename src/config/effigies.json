@@ -1,0 +1,82 @@
+[
+    {
+      "id": "warriors_effigy",
+      "name": "Warrior's Effigy",
+      "description": "+12% ATK to all Warrior allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "ATK", "valuePct": 0.12, "condition": { "actor_class": "Warrior" } }
+      ]
+    },
+    {
+      "id": "mages_effigy",
+      "name": "Mage's Effigy",
+      "description": "+12% ATK to all Mage allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "ATK", "valuePct": 0.12, "condition": { "actor_class": "Mage" } }
+      ]
+    },
+    {
+      "id": "guardians_effigy",
+      "name": "Guardian's Effigy",
+      "description": "+12% DEF to all Guardian allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "DEF", "valuePct": 0.12, "condition": { "actor_class": "Guardian" } }
+      ]
+    },
+    {
+      "id": "rogues_effigy",
+      "name": "Rogue's Effigy",
+      "description": "+12% SPD to all Rogue allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "SPD", "valuePct": 0.12, "condition": { "actor_class": "Rogue" } }
+      ]
+    },
+    {
+      "id": "fire_effigy",
+      "name": "Effigy of Fire",
+      "description": "+10% ATK to all Fire allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "ATK", "valuePct": 0.10, "condition": { "actor_element": "Fire" } }
+      ]
+    },
+    {
+      "id": "ice_effigy",
+      "name": "Effigy of Ice",
+      "description": "+10% DEF to all Ice allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "DEF", "valuePct": 0.10, "condition": { "actor_element": "Ice" } }
+      ]
+    },
+    {
+      "id": "water_effigy",
+      "name": "Effigy of Water",
+      "description": "+10% HP to all Water allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "HP", "valuePct": 0.10, "condition": { "actor_element": "Water" } }
+      ]
+    },
+    {
+      "id": "light_effigy",
+      "name": "Effigy of Light",
+      "description": "+10% SPD to all Light allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "SPD", "valuePct": 0.10, "condition": { "actor_element": "Light" } }
+      ]
+    },
+    {
+      "id": "dark_effigy",
+      "name": "Effigy of Darkness",
+      "description": "+10% ATK to all Dark allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "ATK", "valuePct": 0.10, "condition": { "actor_element": "Dark" } }
+      ]
+    },
+    {
+      "id": "nature_effigy",
+      "name": "Effigy of Nature",
+      "description": "+10% HP to all Nature allies.",
+      "effects": [
+        { "type": "TeamBuffIf", "stat": "HP", "valuePct": 0.10, "condition": { "actor_element": "Nature" } }
+      ]
+    }
+]

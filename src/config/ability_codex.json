@@ -1,0 +1,81 @@
+{
+    "OnBattleStart": [
+      { "match": "greco-roman allies gain +5% to all stats", "effect": { "type": "TeamBuffIf", "stat": "ALL", "valuePct": 0.05, "condition": { "actor_pantheon": "Greco-Roman" } } },
+      { "match": "defensive boost for the first turn", "effect": { "type": "TeamBuff", "stat": "DEF", "valuePct": 0.30, "durationTurns": 1 } },
+      { "match": "increased chance to dodge attacks for the first turn", "effect": { "type": "TeamBuff", "stat": "DODGE", "valuePct": 0.15, "durationTurns": 1 } },
+      { "match": "envelops the field in darkness, slightly reducing all enemies' accuracy", "effect": { "type": "ApplyDebuff", "debuff": "accuracy_down", "valuePct": 0.10, "durationTurns": 3, "target": "opponents" } },
+      { "match": "applies a 'poison' debuff to all enemies", "effect": { "type": "ApplyDebuff", "debuff": "poison", "durationTurns": 99, "target": "opponents" } },
+      { "match": "apply a random powerful buff to an ally and a random debuff to an enemy", "effect": { "type": "RandomBuffAndDebuff", "targetAlly": "random_ally", "targetEnemy": "random_enemy" } },
+      { "match": "the entire team gains +5% attack for the first 3 turns", "effect": { "type": "TeamBuff", "stat": "ATK", "valuePct": 0.05, "durationTurns": 3 } },
+      { "match": "slightly lowers the speed of all enemies", "effect": { "type": "ApplyDebuff", "debuff": "speed_down", "valuePct": 0.10, "durationTurns": 2, "target": "opponents" } },
+      { "match": "provides a temporary speed boost to all allies", "effect": { "type": "TeamBuff", "stat": "SPD", "valuePct": 0.15, "durationTurns": 2 } }
+    ],
+    "OnTurnStart": [
+      { "match": "recovers a small amount of hp at the start of each turn", "effect": { "type": "SelfHeal", "valuePct": 0.03 } },
+      { "match": "provides a small amount of healing to all allies at the start of each turn", "effect": { "type": "TeamHeal", "valuePct": 0.02 } },
+      { "match": "attack increases by 5% for every 20% health missing", "effect": { "type": "SelfBuffConditional", "stat": "ATK", "condition": "missing_health", "valuePerThreshold": 0.05, "thresholdPct": 0.20 } }
+    ],
+    "OnAttack": [
+      { "match": "chance to apply a 'bleed' effect", "effect": { "type": "ApplyDebuffChance", "debuff": "bleed", "durationTurns": 3, "chance": 0.35 } },
+      { "match": "deals 20% increased damage to 's' tier characters", "effect": { "type": "DamageBonusVsTag", "tag": "S-Tier", "valuePct": 0.20 } },
+      { "match": "deals 10% additional damage to characters of the 'giant' class", "effect": { "type": "DamageBonusVsTag", "tag": "Giant", "valuePct": 0.10 } },
+      { "match": "deals 15% more damage to enemies with less than 50% hp", "effect": { "type": "DamageBonusVsCondition", "condition": { "target_hp_less_than": 0.50 }, "valuePct": 0.15 } },
+      { "match": "deals 25% increased damage to 'dragon' and 'monster' type enemies", "effect": { "type": "DamageBonusVsTag", "tag": ["Dragon", "Monster"], "valuePct": 0.25 } },
+      { "match": "chance to briefly lower enemy defense", "effect": { "type": "ApplyDebuffChance", "debuff": "defense_down", "valuePct": 0.15, "durationTurns": 2, "chance": 0.10 } },
+      { "match": "chance to strike a secondary, random target", "effect": { "type": "CleaveAttack", "cleaveTarget": "random", "cleaveDamagePct": 0.30, "chance": 0.25 } },
+      { "match": "chance to cause enemies to attack their own allies", "effect": { "type": "ApplyDebuffChance", "debuff": "confuse", "durationTurns": 1, "chance": 0.10 } },
+      { "match": "chance to turn an enemy into a non-threatening 'pig'", "effect": { "type": "ApplyDebuffChance", "debuff": "polymorph_pig", "durationTurns": 1, "chance": 0.10 } }
+    ],
+    "OnBeingAttacked": [
+      { "match": "attackers have speed and attack permanently lowered", "effect": { "type": "AttackerPermanentDebuff", "debuffs": [{ "kind":"attack_down","valuePct":0.05 }, { "kind":"speed_down","valuePct":0.05 }] } },
+      { "match": "chance to become 'trapped', reducing their speed", "effect": { "type": "ApplyDebuffChanceToAttacker", "debuff": "speed_down", "valuePct": 0.20, "durationTurns": 2, "chance": 0.20 } },
+      { "match": "has a 15% chance to dodge an incoming physical attack", "effect": { "type": "DodgeChance", "attackType": "Physical", "chance": 0.15 } },
+      { "match": "chance to create a duplicate, causing the attack to miss", "effect": { "type": "DodgeChance", "chance": 0.05, "vfx": "create_duplicate" } },
+      { "match": "takes 50% less damage from the first hit received", "effect": { "type": "FirstHitDamageReduction", "valuePct": 0.50 } }
+    ],
+    "OnTurnEnd": [
+      { "match": "provides a small amount of healing to all allies", "effect": { "type": "TeamHeal", "valuePct": 0.04 } },
+      { "match": "grants a small amount of healing to the most injured ally", "effect": { "type": "HealMostInjured", "valuePct": 0.08 } }
+    ],
+    "OnEnemyDefeat": [
+      { "match": "restores a small amount of hp upon defeating an enemy", "effect": { "type": "SelfHeal", "valuePct": 0.10 } },
+      { "match": "gains a small, permanent stacking bonus to attack", "effect": { "type": "SelfBuff", "stat": "ATK", "valuePct": 0.05, "durationTurns": 99, "stacking": true } }
+    ],
+    "OnAllyDefeat": [
+      { "match": "gains a massive attack boost for one turn", "effect": { "type": "SelfBuff", "stat": "ATK", "valuePct": 0.50, "durationTurns": 1 } },
+      { "match": "gains a temporary speed boost", "effect": { "type": "SelfBuff", "stat": "SPD", "valuePct": 0.20, "durationTurns": 2 } },
+      { "match": "a 'dread bloom' appears in their place", "effect": { "type": "SummonOnDeath", "unitSlug": "dread_bloom", "slot": "self" } }
+    ],
+    "Thresholds": [
+      { "match": "instantly defeats non-boss enemies below 10% hp", "effect": { "type": "ExecuteBelowPct", "valuePct": 0.10, "condition": { "target_is_not": "Boss" } } },
+      { "match": "when an ally's hp drops below 25%, they receive a significant one-time heal", "effect": { "type": "AllyHealOnThreshold", "thresholdPct": 0.25, "valuePct": 0.30 } }
+    ],
+    "Auras": [
+      { "match": "enemy debuffs have a 10% chance to fail", "effect": { "type": "TeamAura", "effect": "DebuffResist", "valuePct": 0.10 } },
+      { "match": "allies on the team gain a slow, steady health regeneration", "effect": { "type": "TeamAura", "effect": "Regen", "valuePct": 0.02 } },
+      { "match": "critical hit chance is increased by 5%", "effect": { "type": "SelfAura", "effect": "CritChance", "valuePct": 0.05 } },
+      { "match": "heirlooms on the team have 5% increased effectiveness", "effect": { "type": "TeamAura", "effect": "HeirloomEffectiveness", "valuePct": 0.05 } },
+      { "match": "increases the effectiveness of defensive abilities", "effect": { "type": "TeamAura", "effect": "DefensiveAbilityEffectiveness", "valuePct": 0.05 } }
+    ],
+    "tagsBySlug": {
+      "zeus": ["S-Tier", "Greco-Roman"],
+      "odin": ["S-Tier", "Norse"],
+      "surtr": ["S-Tier", "Giant", "Fire"],
+      "thor": ["A-Tier", "Norse"],
+      "heracles": ["S-Tier", "Hero", "Greco-Roman"],
+      "achilles": ["B-Tier", "Hero", "Greco-Roman"],
+      "sigurd": ["A-Tier", "Hero", "Norse"],
+      "beowulf": ["A-Tier", "Hero", "Norse"],
+      "ymir": ["A-Tier", "Giant", "Ice"],
+      "frost_giant": ["C-Tier", "Giant", "Ice"],
+      "fire_giant": ["C-Tier", "Giant", "Fire"],
+      "minotaur": ["C-Tier", "Monster"],
+      "hydra": ["C-Tier", "Monster"],
+      "chimera": ["C-Tier", "Monster"],
+      "nidhogg": ["C-Tier", "Dragon"],
+      "jormungandr": ["S-Tier", "Serpent", "Monster"],
+      "ladon": ["C-Tier", "Dragon"],
+      "colchian_dragon": ["C-Tier", "Dragon"],
+      "fafnir": ["C-Tier", "Dragon"]
+    }
+}

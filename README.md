@@ -53,7 +53,7 @@ Environment variables in `.env`:
 - `/view relic_id` — Public view of any relic by ID.
 - `/balance` — Show your gold and materials with quick actions.
 - `/daily` — Claim daily rewards with streaks and bonuses.
-- `/inspect player [page]` — View another player’s collection.
+- `/profile [player] [page]` — Show a player profile with a collection pane.
 - `/lookup [search] [page]` — Browse all characters; search by name/pantheon/class/element. Sorted by rarity.
 - `/trade offer [player] [message]` — Create a trade offer (open if no player).
 - `/trade list [type]` — View sent/received/open/all trades.
@@ -61,7 +61,7 @@ Environment variables in `.env`:
 - `/trade accept trade_id` — Accept a trade.
 - `/trade cancel trade_id` — Cancel a trade (initiator/target).
 - `/trade history [page]` — View your completed trade history.
-- `/browse trades|market [page] [rarity]` — Browse open trades or market listings.
+- `/browse trades|market [page]` — Browse open trades or market listings.
 
 Notes:
 - Replies are public; embeds are viewable by everyone in channel.

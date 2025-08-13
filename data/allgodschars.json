@@ -7,13 +7,29 @@
     "rarity": "S",
     "class": "Mage",
     "element": "Lightning",
-    "hp": 120,
-    "atk": 18,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "King of Olympus",
-    "passive_ability_desc": "All Greco-Roman allies gain +5% to all stats.",
-    "lore": "The supreme god of the Olympians, wielder of the thunderbolt and ruler of the skies."
+    "hp": 1200,
+    "atk": 180,
+    "def": 100,
+    "spd": 120,
+    "lore": "The supreme god of the Olympians, wielder of the thunderbolt and ruler of the skies.",
+    "passive": {
+      "name": "King of Olympus",
+      "type": "Aura",
+      "params": {
+        "ally_buff": {
+          "stat": "all",
+          "valuePct": 0.1,
+          "condition": {
+            "pantheon": "Greco-Roman"
+          }
+        },
+        "enemy_debuff": {
+          "debuff": "accuracy_down",
+          "valuePct": 0.1
+        }
+      },
+      "desc": "All Greco-Roman allies gain +10% to all stats. All enemies suffer -10% Accuracy."
+    }
   },
   {
     "id": 102,
@@ -23,13 +39,20 @@
     "rarity": "S",
     "class": "Mage",
     "element": "Light",
-    "hp": 115,
-    "atk": 17,
-    "def": 12,
-    "spd": 11,
-    "passive_ability_name": "Queen's Decree",
-    "passive_ability_desc": "Enemy debuffs have a 10% chance to fail against your team.",
-    "lore": "Queen of the Gods and goddess of marriage, women, and family."
+    "hp": 1150,
+    "atk": 170,
+    "def": 120,
+    "spd": 110,
+    "lore": "Queen of the Gods and goddess of marriage, women, and family.",
+    "passive": {
+      "name": "Queen's Decree",
+      "type": "Resistance",
+      "params": {
+        "resist": "debuff",
+        "chancePct": 0.2
+      },
+      "desc": "All allies have a 20% chance to resist any debuff."
+    }
   },
   {
     "id": 138,
@@ -39,13 +62,24 @@
     "rarity": "S",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 180,
-    "atk": 10,
-    "def": 20,
-    "spd": 3,
-    "passive_ability_name": "Primordial Earth",
-    "passive_ability_desc": "The entire team receives a massive defensive boost for the first turn of battle.",
-    "lore": "The personification of the Earth, one of the Greek primordial deities."
+    "hp": 1800,
+    "atk": 100,
+    "def": 200,
+    "spd": 30,
+    "lore": "The personification of the Earth, one of the Greek primordial deities.",
+    "passive": {
+      "name": "Primordial Earth",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "allies",
+        "buff": {
+          "type": "defense_up",
+          "valuePct": 0.5,
+          "durationTurns": 1
+        }
+      },
+      "desc": "All allies gain +50% DEF for the first turn of battle."
+    }
   },
   {
     "id": 139,
@@ -55,13 +89,24 @@
     "rarity": "S",
     "class": "Mage",
     "element": "Wind",
-    "hp": 120,
-    "atk": 18,
-    "def": 12,
-    "spd": 14,
-    "passive_ability_name": "Primordial Sky",
-    "passive_ability_desc": "The entire team has an increased chance to dodge attacks for the first turn.",
-    "lore": "The personification of the Sky, the primordial Greek god of the heavens."
+    "hp": 1200,
+    "atk": 180,
+    "def": 120,
+    "spd": 140,
+    "lore": "The personification of the Sky, the primordial Greek god of the heavens.",
+    "passive": {
+      "name": "Primordial Sky",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "allies",
+        "buff": {
+          "type": "dodge_up",
+          "valuePct": 0.2,
+          "durationTurns": 1
+        }
+      },
+      "desc": "All allies gain +20% Dodge chance for the first turn."
+    }
   },
   {
     "id": 159,
@@ -71,13 +116,23 @@
     "rarity": "S",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 140,
-    "atk": 19,
-    "def": 12,
-    "spd": 11,
-    "passive_ability_name": "Father of Monsters",
-    "passive_ability_desc": "All 'C' tier allies on the team gain a significant boost to their Attack.",
-    "lore": "The deadliest monster of Greek mythology, a monstrous serpentine giant."
+    "hp": 1400,
+    "atk": 190,
+    "def": 120,
+    "spd": 110,
+    "lore": "The deadliest monster of Greek mythology, a monstrous serpentine giant.",
+    "passive": {
+      "name": "Father of Monsters",
+      "type": "TeamBuff",
+      "params": {
+        "condition": {
+          "rarity_is": "C"
+        },
+        "stat": "ATK",
+        "valuePct": 0.3
+      },
+      "desc": "All C-tier allies gain +30% ATK."
+    }
   },
   {
     "id": 160,
@@ -86,14 +141,25 @@
     "pantheon": "Greco-Roman",
     "rarity": "S",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 110,
-    "atk": 20,
-    "def": 9,
-    "spd": 15,
-    "passive_ability_name": "Primordial Night",
-    "passive_ability_desc": "At the start of battle, envelops the field in darkness, slightly reducing all enemies' accuracy.",
-    "lore": "The Greek primordial goddess of the night, a shadowy figure of exceptional power and beauty."
+    "element": "Dark",
+    "hp": 1100,
+    "atk": 200,
+    "def": 90,
+    "spd": 150,
+    "lore": "The Greek primordial goddess of the night, a shadowy figure of exceptional power and beauty.",
+    "passive": {
+      "name": "Primordial Night",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "enemies",
+        "debuff": {
+          "type": "accuracy_down",
+          "valuePct": 0.15,
+          "durationTurns": 3
+        }
+      },
+      "desc": "All enemies suffer -15% Accuracy for 3 turns at the start of battle."
+    }
   },
   {
     "id": 201,
@@ -102,14 +168,23 @@
     "pantheon": "Norse",
     "rarity": "S",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 110,
-    "atk": 19,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "All-Father's Wisdom",
-    "passive_ability_desc": "Grants a 10% chance to identify an enemy's weakness at the start of battle.",
-    "lore": "The All-Father of the Norse gods, who sacrificed an eye for cosmic knowledge."
+    "element": "Dark",
+    "hp": 1100,
+    "atk": 190,
+    "def": 90,
+    "spd": 130,
+    "lore": "The All-Father of the Norse gods, who sacrificed an eye for cosmic knowledge.",
+    "passive": {
+      "name": "All-Father's Wisdom",
+      "type": "Aura",
+      "params": {
+        "ally_buff": {
+          "stat": "crit_chance",
+          "valuePct": 0.1
+        }
+      },
+      "desc": "All allies gain +10% Critical Hit Chance."
+    }
   },
   {
     "id": 202,
@@ -119,13 +194,20 @@
     "rarity": "S",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 130,
-    "atk": 18,
-    "def": 11,
-    "spd": 14,
-    "passive_ability_name": "Unbound Fury",
-    "passive_ability_desc": "Attack increases by 5% for every 20% health missing.",
-    "lore": "A monstrous wolf, son of Loki, destined to slay Odin during Ragnarok."
+    "hp": 1300,
+    "atk": 180,
+    "def": 110,
+    "spd": 140,
+    "lore": "A monstrous wolf, son of Loki, destined to slay Odin during Ragnarok.",
+    "passive": {
+      "name": "Unbound Fury",
+      "type": "SelfBuffOnHealthLoss",
+      "params": {
+        "stat": "ATK",
+        "valuePctPer20PctMissing": 0.1
+      },
+      "desc": "Gains +10% ATK for every 20% of max HP missing."
+    }
   },
   {
     "id": 130,
@@ -135,13 +217,23 @@
     "rarity": "S",
     "class": "Guardian",
     "element": "Water",
-    "hp": 160,
-    "atk": 14,
-    "def": 16,
-    "spd": 6,
-    "passive_ability_name": "World Serpent",
-    "passive_ability_desc": "At the start of battle, applies a 'Poison' debuff to all enemies.",
-    "lore": "The Midgard Serpent, a sea serpent so large it encircles the world."
+    "hp": 1600,
+    "atk": 140,
+    "def": 160,
+    "spd": 60,
+    "lore": "The Midgard Serpent, a sea serpent so large it encircles the world.",
+    "passive": {
+      "name": "World Serpent",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "enemies",
+        "debuff": {
+          "type": "poison",
+          "durationTurns": 3
+        }
+      },
+      "desc": "Applies Poison to all enemies for 3 turns at the start of battle."
+    }
   },
   {
     "id": 131,
@@ -151,13 +243,22 @@
     "rarity": "S",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 135,
-    "atk": 20,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "Scourge of Gods",
-    "passive_ability_desc": "Deals 20% increased damage to 'S' tier characters.",
-    "lore": "A fire giant who wields a flaming sword and is destined to destroy Asgard."
+    "hp": 1350,
+    "atk": 200,
+    "def": 100,
+    "spd": 120,
+    "lore": "A fire giant who wields a flaming sword and is destined to destroy Asgard.",
+    "passive": {
+      "name": "Scourge of Gods",
+      "type": "DamageModifier",
+      "params": {
+        "condition": {
+          "target_rarity_is": "S"
+        },
+        "valuePct": 0.3
+      },
+      "desc": "Deals 30% bonus damage to S-tier enemies."
+    }
   },
   {
     "id": 235,
@@ -167,13 +268,22 @@
     "rarity": "S",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 200,
-    "atk": 8,
-    "def": 22,
-    "spd": 2,
-    "passive_ability_name": "The World Tree",
-    "passive_ability_desc": "All allies on the team gain a slow, steady health regeneration.",
-    "lore": "An immense and central sacred tree, around which all else exists."
+    "hp": 2000,
+    "atk": 80,
+    "def": 220,
+    "spd": 20,
+    "lore": "An immense and central sacred tree, around which all else exists.",
+    "passive": {
+      "name": "The World Tree",
+      "type": "Aura",
+      "params": {
+        "ally_buff": {
+          "type": "HealOverTime",
+          "valuePct": 0.05
+        }
+      },
+      "desc": "All allies regenerate 5% of their max HP at the start of their turn."
+    }
   },
   {
     "id": 240,
@@ -182,14 +292,23 @@
     "pantheon": "Norse",
     "rarity": "S",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 110,
-    "atk": 18,
-    "def": 10,
-    "spd": 15,
-    "passive_ability_name": "Weavers of Fate",
-    "passive_ability_desc": "At the start of battle, apply a random powerful buff to an ally and a random debuff to an enemy.",
-    "lore": "Three female beings who rule the destiny of gods and men."
+    "element": "Dark",
+    "hp": 1100,
+    "atk": 180,
+    "def": 100,
+    "spd": 150,
+    "lore": "Three female beings who rule the destiny of gods and men.",
+    "passive": {
+      "name": "Weavers of Fate",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "random_ally",
+        "buff": "random",
+        "target2": "random_enemy",
+        "debuff": "random"
+      },
+      "desc": "Applies a random powerful buff to one ally and a random debuff to one enemy at the start of battle."
+    }
   },
   {
     "id": 103,
@@ -199,13 +318,20 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Dark",
-    "hp": 150,
-    "atk": 12,
-    "def": 15,
-    "spd": 8,
-    "passive_ability_name": "Helm of Invisibility",
-    "passive_ability_desc": "Has a 15% chance to dodge an incoming physical attack.",
-    "lore": "Ruler of the Underworld and lord of the dead, wielding power over wealth and souls."
+    "hp": 1500,
+    "atk": 120,
+    "def": 150,
+    "spd": 80,
+    "lore": "Ruler of the Underworld and lord of the dead, wielding power over wealth and souls.",
+    "passive": {
+      "name": "Helm of Invisibility",
+      "type": "Resistance",
+      "params": {
+        "resist": "Physical",
+        "chancePct": 0.15
+      },
+      "desc": "Has a 15% chance to dodge incoming Physical attacks."
+    }
   },
   {
     "id": 104,
@@ -215,13 +341,21 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Water",
-    "hp": 135,
-    "atk": 16,
-    "def": 13,
-    "spd": 9,
-    "passive_ability_name": "Earth Shaker",
-    "passive_ability_desc": "Basic attacks have a 10% chance to briefly lower enemy defense.",
-    "lore": "God of the sea, earthquakes, and storms, wielding the mighty trident."
+    "hp": 1350,
+    "atk": 160,
+    "def": 130,
+    "spd": 90,
+    "lore": "God of the sea, earthquakes, and storms, wielding the mighty trident.",
+    "passive": {
+      "name": "Earth Shaker",
+      "type": "OnHitEffect",
+      "params": {
+        "debuff": "defense_down",
+        "chancePct": 0.15,
+        "durationTurns": 1
+      },
+      "desc": "Attacks have a 15% chance to lower the target's DEF for 1 turn."
+    }
   },
   {
     "id": 105,
@@ -231,13 +365,24 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 125,
-    "atk": 18,
-    "def": 11,
-    "spd": 10,
-    "passive_ability_name": "Spirit of Battle",
-    "passive_ability_desc": "The entire team gains +5% Attack for the first 3 turns of combat.",
-    "lore": "The fearsome and often brutal Greek god of war and courage."
+    "hp": 1250,
+    "atk": 180,
+    "def": 110,
+    "spd": 100,
+    "lore": "The fearsome and often brutal Greek god of war and courage.",
+    "passive": {
+      "name": "Spirit of Battle",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "allies",
+        "buff": {
+          "type": "attack_up",
+          "valuePct": 0.1,
+          "durationTurns": 3
+        }
+      },
+      "desc": "All allies gain +10% ATK for the first 3 turns."
+    }
   },
   {
     "id": 106,
@@ -247,13 +392,20 @@
     "rarity": "A",
     "class": "Rogue",
     "element": "Light",
-    "hp": 110,
-    "atk": 16,
-    "def": 9,
-    "spd": 15,
-    "passive_ability_name": "Sun's Precision",
-    "passive_ability_desc": "Critical hit chance is increased by 5%.",
-    "lore": "God of music, arts, knowledge, and light. Known for his skill with the bow."
+    "hp": 1100,
+    "atk": 160,
+    "def": 90,
+    "spd": 150,
+    "lore": "God of music, arts, knowledge, and light. Known for his skill with the bow.",
+    "passive": {
+      "name": "Sun's Precision",
+      "type": "SelfBuff",
+      "params": {
+        "stat": "crit_chance",
+        "valuePct": 0.1
+      },
+      "desc": "Permanently increases own Critical Hit Chance by 10%."
+    }
   },
   {
     "id": 107,
@@ -263,13 +415,22 @@
     "rarity": "A",
     "class": "Rogue",
     "element": "Nature",
-    "hp": 105,
-    "atk": 17,
-    "def": 8,
-    "spd": 16,
-    "passive_ability_name": "Huntress' Focus",
-    "passive_ability_desc": "Deals 15% more damage to enemies with less than 50% HP.",
-    "lore": "Goddess of the hunt, the wilderness, and wild animals. A master archer."
+    "hp": 1050,
+    "atk": 170,
+    "def": 80,
+    "spd": 160,
+    "lore": "Goddess of the hunt, the wilderness, and wild animals. A master archer.",
+    "passive": {
+      "name": "Huntress' Focus",
+      "type": "DamageModifier",
+      "params": {
+        "condition": {
+          "target_hp_below": 0.5
+        },
+        "valuePct": 0.2
+      },
+      "desc": "Deals 20% more damage to enemies below 50% HP."
+    }
   },
   {
     "id": 108,
@@ -279,13 +440,20 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Fire",
-    "hp": 140,
-    "atk": 14,
-    "def": 16,
-    "spd": 7,
-    "passive_ability_name": "Master Smith",
-    "passive_ability_desc": "All equipped Heirlooms on the team have 5% increased effectiveness.",
-    "lore": "God of blacksmiths, metalworking, and fire. The divine craftsman of Olympus."
+    "hp": 1400,
+    "atk": 140,
+    "def": 160,
+    "spd": 70,
+    "lore": "God of blacksmiths, metalworking, and fire. The divine craftsman of Olympus.",
+    "passive": {
+      "name": "Master Smith",
+      "type": "TeamBuff",
+      "params": {
+        "stat": "all",
+        "valuePct": 0.05
+      },
+      "desc": "Increases all stats of all allies by 5%."
+    }
   },
   {
     "id": 132,
@@ -295,13 +463,23 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Fire",
-    "hp": 110,
-    "atk": 17,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Giver of Fire",
-    "passive_ability_desc": "Increases the damage of all 'Fire' element allies by 5%.",
-    "lore": "A Titan who stole fire from the gods and gave it to humanity."
+    "hp": 1100,
+    "atk": 170,
+    "def": 90,
+    "spd": 130,
+    "lore": "A Titan who stole fire from the gods and gave it to humanity.",
+    "passive": {
+      "name": "Giver of Fire",
+      "type": "TeamBuff",
+      "params": {
+        "condition": {
+          "element_is": "Fire"
+        },
+        "stat": "ATK",
+        "valuePct": 0.15
+      },
+      "desc": "All Fire allies gain +15% ATK."
+    }
   },
   {
     "id": 133,
@@ -311,13 +489,20 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 160,
-    "atk": 10,
-    "def": 18,
-    "spd": 5,
-    "passive_ability_name": "Titan's Burden",
-    "passive_ability_desc": "Cannot be moved or displaced by enemy abilities. High resistance to stuns.",
-    "lore": "The Titan condemned to hold up the celestial heavens for eternity."
+    "hp": 1600,
+    "atk": 100,
+    "def": 180,
+    "spd": 50,
+    "lore": "The Titan condemned to hold up the celestial heavens for eternity.",
+    "passive": {
+      "name": "Titan's Burden",
+      "type": "Resistance",
+      "params": {
+        "resist": "stun",
+        "chancePct": 1.0
+      },
+      "desc": "Immune to Stun effects."
+    }
   },
   {
     "id": 140,
@@ -327,13 +512,23 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 140,
-    "atk": 17,
-    "def": 14,
-    "spd": 8,
-    "passive_ability_name": "Titan King",
-    "passive_ability_desc": "Deals bonus damage to 'S' tier Greco-Roman gods.",
-    "lore": "The leader of the first generation of Titans, who overthrew his father Ouranos."
+    "hp": 1400,
+    "atk": 170,
+    "def": 140,
+    "spd": 80,
+    "lore": "The leader of the first generation of Titans, who overthrew his father Ouranos.",
+    "passive": {
+      "name": "Titan King",
+      "type": "DamageModifier",
+      "params": {
+        "condition": {
+          "target_rarity_is": "S",
+          "target_pantheon_is": "Greco-Roman"
+        },
+        "valuePct": 0.25
+      },
+      "desc": "Deals 25% bonus damage to S-tier Greco-Roman enemies."
+    }
   },
   {
     "id": 141,
@@ -343,13 +538,22 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 130,
-    "atk": 12,
-    "def": 16,
-    "spd": 9,
-    "passive_ability_name": "Mother of Gods",
-    "passive_ability_desc": "When an ally's HP drops below 25%, they receive a significant one-time heal.",
-    "lore": "The Titaness mother of the gods, and goddess of female fertility and motherhood."
+    "hp": 1300,
+    "atk": 120,
+    "def": 160,
+    "spd": 90,
+    "lore": "The Titaness mother of the gods, and goddess of female fertility and motherhood.",
+    "passive": {
+      "name": "Mother of Gods",
+      "type": "ReactiveTrigger",
+      "params": {
+        "trigger": "ally_hp_below_25",
+        "effect": "Heal",
+        "valuePct": 0.3,
+        "once_per_battle": true
+      },
+      "desc": "When an ally's HP drops below 25%, they receive a one-time heal for 30% of their max HP."
+    }
   },
   {
     "id": 155,
@@ -359,13 +563,21 @@
     "rarity": "A",
     "class": "Rogue",
     "element": "Water",
-    "hp": 115,
-    "atk": 17,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "Six-Headed Horror",
-    "passive_ability_desc": "Attacks have a chance to strike a secondary, random target for minor damage.",
-    "lore": "A legendary sea monster who haunted the rocks of a narrow strait."
+    "hp": 1150,
+    "atk": 170,
+    "def": 90,
+    "spd": 140,
+    "lore": "A legendary sea monster who haunted the rocks of a narrow strait.",
+    "passive": {
+      "name": "Six-Headed Horror",
+      "type": "OnHitEffect",
+      "params": {
+        "effect": "cleave",
+        "chancePct": 0.4,
+        "cleave_damage_pct": 0.3
+      },
+      "desc": "Attacks have a 40% chance to also hit a random secondary target for 30% damage."
+    }
   },
   {
     "id": 156,
@@ -375,13 +587,24 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Water",
-    "hp": 150,
-    "atk": 10,
-    "def": 16,
-    "spd": 5,
-    "passive_ability_name": "Whirlpool's Pull",
-    "passive_ability_desc": "At the start of its turn, has a chance to pull the fastest enemy to the front and slow them.",
-    "lore": "A sea monster, later rationalized as a whirlpool, who swallows and spews water."
+    "hp": 1500,
+    "atk": 100,
+    "def": 160,
+    "spd": 50,
+    "lore": "A sea monster, later rationalized as a whirlpool, who swallows and spews water.",
+    "passive": {
+      "name": "Whirlpool's Pull",
+      "type": "OnTurnStart",
+      "params": {
+        "chancePct": 0.25,
+        "effect": "ApplyDebuff",
+        "debuff": "speed_down",
+        "valuePct": 0.2,
+        "durationTurns": 1,
+        "target": "fastest_enemy"
+      },
+      "desc": "At the start of its turn, has a 25% chance to lower the SPD of the fastest enemy by 20% for 1 turn."
+    }
   },
   {
     "id": 157,
@@ -390,14 +613,22 @@
     "pantheon": "Greco-Roman",
     "rarity": "A",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 100,
-    "atk": 16,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "Goddess of Discord",
-    "passive_ability_desc": "When attacking, has a chance to cause enemies to attack their own allies.",
-    "lore": "The Greek goddess of strife and discord, known for starting the Trojan War."
+    "element": "Dark",
+    "hp": 1000,
+    "atk": 160,
+    "def": 80,
+    "spd": 150,
+    "lore": "The Greek goddess of strife and discord, known for starting the Trojan War.",
+    "passive": {
+      "name": "Goddess of Discord",
+      "type": "OnHitEffect",
+      "params": {
+        "debuff": "attack_down",
+        "chancePct": 0.3,
+        "durationTurns": 2
+      },
+      "desc": "Attacks have a 30% chance to lower the target's ATK for 2 turns."
+    }
   },
   {
     "id": 203,
@@ -407,13 +638,22 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Lightning",
-    "hp": 130,
-    "atk": 17,
-    "def": 12,
-    "spd": 10,
-    "passive_ability_name": "Son of Odin",
-    "passive_ability_desc": "Deals 10% additional damage to characters of the 'Giant' class.",
-    "lore": "The mighty God of Thunder, defender of Asgard and wielder of Mjolnir."
+    "hp": 1300,
+    "atk": 170,
+    "def": 120,
+    "spd": 100,
+    "lore": "The mighty God of Thunder, defender of Asgard and wielder of Mjolnir.",
+    "passive": {
+      "name": "Son of Odin",
+      "type": "DamageModifier",
+      "params": {
+        "condition": {
+          "target_class_is": "Guardian"
+        },
+        "valuePct": 0.15
+      },
+      "desc": "Deals 15% bonus damage to Guardian class enemies."
+    }
   },
   {
     "id": 204,
@@ -422,14 +662,21 @@
     "pantheon": "Norse",
     "rarity": "A",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 100,
-    "atk": 15,
-    "def": 9,
-    "spd": 16,
-    "passive_ability_name": "Master of Deceit",
-    "passive_ability_desc": "When attacked, has a 5% chance to create a duplicate, causing the attack to miss.",
-    "lore": "The cunning trickster god, a shapeshifter who walks a fine line between ally and enemy."
+    "element": "Dark",
+    "hp": 1000,
+    "atk": 150,
+    "def": 90,
+    "spd": 160,
+    "lore": "The cunning trickster god, a shapeshifter who walks a fine line between ally and enemy.",
+    "passive": {
+      "name": "Master of Deceit",
+      "type": "Resistance",
+      "params": {
+        "resist": "any",
+        "chancePct": 0.1
+      },
+      "desc": "Has a 10% chance to dodge any incoming attack."
+    }
   },
   {
     "id": 205,
@@ -439,13 +686,21 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Light",
-    "hp": 105,
-    "atk": 16,
-    "def": 10,
-    "spd": 14,
-    "passive_ability_name": "Queen of Fólkvangr",
-    "passive_ability_desc": "Grants a small amount of healing to the most injured ally at the end of her turn.",
-    "lore": "Goddess of love, beauty, fertility, and war, who rides a chariot pulled by cats."
+    "hp": 1050,
+    "atk": 160,
+    "def": 100,
+    "spd": 140,
+    "lore": "Goddess of love, beauty, fertility, and war, who rides a chariot pulled by cats.",
+    "passive": {
+      "name": "Queen of Fólkvangr",
+      "type": "OnTurnEnd",
+      "params": {
+        "effect": "Heal",
+        "target": "most_injured_ally",
+        "valuePct": 0.1
+      },
+      "desc": "At the end of her turn, heals the most injured ally for 10% of their max HP."
+    }
   },
   {
     "id": 206,
@@ -455,13 +710,20 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Light",
-    "hp": 110,
-    "atk": 15,
-    "def": 13,
-    "spd": 12,
-    "passive_ability_name": "Weaver of Fates",
-    "passive_ability_desc": "Reduces the duration of negative status effects on all allies by 1 turn.",
-    "lore": "Odin's wife, the goddess of wisdom and foresight."
+    "hp": 1100,
+    "atk": 150,
+    "def": 130,
+    "spd": 120,
+    "lore": "Odin's wife, the goddess of wisdom and foresight.",
+    "passive": {
+      "name": "Weaver of Fates",
+      "type": "OnTurnStart",
+      "params": {
+        "effect": "ReduceDebuffDuration",
+        "value": 1
+      },
+      "desc": "Reduces the duration of all negative status effects on all allies by 1 turn at the start of her turn."
+    }
   },
   {
     "id": 207,
@@ -471,13 +733,22 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Dark",
-    "hp": 115,
-    "atk": 17,
-    "def": 10,
-    "spd": 11,
-    "passive_ability_name": "Queen of Helheim",
-    "passive_ability_desc": "Enemies defeated by this character cannot be revived.",
-    "lore": "The goddess who presides over the underworld realm of the dead, Helheim."
+    "hp": 1150,
+    "atk": 170,
+    "def": 100,
+    "spd": 110,
+    "lore": "The goddess who presides over the underworld realm of the dead, Helheim.",
+    "passive": {
+      "name": "Queen of Helheim",
+      "type": "OnHitEffect",
+      "params": {
+        "effect": "ApplyDebuff",
+        "debuff": "no_revive",
+        "durationTurns": 99,
+        "chancePct": 1.0
+      },
+      "desc": "Enemies defeated by this character cannot be revived."
+    }
   },
   {
     "id": 225,
@@ -487,13 +758,24 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Ice",
-    "hp": 170,
-    "atk": 11,
-    "def": 17,
-    "spd": 4,
-    "passive_ability_name": "Primordial Giant",
-    "passive_ability_desc": "At the start of battle, slightly lowers the Speed of all enemies.",
-    "lore": "The ancestor of all jötnar (giants), from whose body the world was created."
+    "hp": 1700,
+    "atk": 110,
+    "def": 170,
+    "spd": 40,
+    "lore": "The ancestor of all jötnar (giants), from whose body the world was created.",
+    "passive": {
+      "name": "Primordial Giant",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "enemies",
+        "debuff": {
+          "type": "speed_down",
+          "valuePct": 0.1,
+          "durationTurns": 2
+        }
+      },
+      "desc": "All enemies suffer -10% SPD for 2 turns."
+    }
   },
   {
     "id": 229,
@@ -503,13 +785,23 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 150,
-    "atk": 11,
-    "def": 17,
-    "spd": 6,
-    "passive_ability_name": "Personification of Earth",
-    "passive_ability_desc": "Allies on the team take reduced damage from 'Earth' and 'Physical' attacks.",
-    "lore": "The personification of the Earth in Norse mythology, and the mother of Thor."
+    "hp": 1500,
+    "atk": 110,
+    "def": 170,
+    "spd": 60,
+    "lore": "The personification of the Earth in Norse mythology, and the mother of Thor.",
+    "passive": {
+      "name": "Personification of Earth",
+      "type": "Resistance",
+      "params": {
+        "resist": [
+          "Nature",
+          "Physical"
+        ],
+        "valuePct": 0.2
+      },
+      "desc": "All allies take 20% reduced damage from Nature and Physical attacks."
+    }
   },
   {
     "id": 109,
@@ -519,12 +811,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Light",
-    "hp": 110,
-    "atk": 13,
-    "def": 14,
-    "spd": 11,
-    "passive_ability_name": "Goddess of Wisdom",
-    "passive_ability_desc": "Increases the effectiveness of defensive abilities for all allies by 5%.",
+    "hp": 1100,
+    "atk": 130,
+    "def": 140,
+    "spd": 110,
     "lore": "Goddess of wisdom, handicraft, and strategic warfare, born from the head of Zeus."
   },
   {
@@ -535,12 +825,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 95,
-    "atk": 12,
-    "def": 8,
-    "spd": 18,
-    "passive_ability_name": "Divine Messenger",
-    "passive_ability_desc": "Expeditions featuring this character are completed 5% faster.",
+    "hp": 950,
+    "atk": 120,
+    "def": 80,
+    "spd": 180,
     "lore": "The swift-footed messenger of the gods, a patron of travelers and thieves."
   },
   {
@@ -551,12 +839,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Nature",
-    "hp": 105,
-    "atk": 15,
-    "def": 10,
-    "spd": 10,
-    "passive_ability_name": "Mad God's Revelry",
-    "passive_ability_desc": "Has a chance to apply a random buff or debuff with each attack.",
+    "hp": 1050,
+    "atk": 150,
+    "def": 100,
+    "spd": 100,
     "lore": "God of wine, festivity, and madness. His presence inspires ecstasy."
   },
   {
@@ -567,12 +853,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 100,
-    "atk": 16,
-    "def": 8,
-    "spd": 13,
-    "passive_ability_name": "Invulnerable Heel",
-    "passive_ability_desc": "Takes 50% less damage from the first hit received in battle.",
+    "hp": 1000,
+    "atk": 160,
+    "def": 80,
+    "spd": 130,
     "lore": "The greatest Greek warrior of the Trojan War, nearly invincible save for his heel."
   },
   {
@@ -583,12 +867,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 105,
-    "atk": 14,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "Cunning Strategist",
-    "passive_ability_desc": "Increases the chance of finding rare loot during Expeditions by 2%.",
+    "hp": 1050,
+    "atk": 140,
+    "def": 100,
+    "spd": 120,
     "lore": "The clever king of Ithaca, famed for his ten-year journey home after the Trojan War."
   },
   {
@@ -599,12 +881,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 90,
-    "atk": 13,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "Petrifying Gaze",
-    "passive_ability_desc": "Basic attacks have a small chance to stun the target for 1 turn.",
+    "hp": 900,
+    "atk": 130,
+    "def": 90,
+    "spd": 140,
     "lore": "A Gorgon with a gaze that could turn onlookers to stone."
   },
   {
@@ -615,12 +895,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 85,
-    "atk": 13,
-    "def": 7,
-    "spd": 16,
-    "passive_ability_name": "Waxen Wings",
-    "passive_ability_desc": "Has very high Speed, but takes increased damage from 'Fire' element attacks.",
+    "hp": 850,
+    "atk": 130,
+    "def": 70,
+    "spd": 160,
     "lore": "The son of the master craftsman Daedalus, known for flying too close to the sun."
   },
   {
@@ -631,12 +909,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 110,
-    "atk": 14,
-    "def": 11,
-    "spd": 12,
-    "passive_ability_name": "King of Athens",
-    "passive_ability_desc": "Deals bonus damage to 'Minotaur' and other beast-type enemies.",
+    "hp": 1100,
+    "atk": 140,
+    "def": 110,
+    "spd": 120,
     "lore": "A mythical king and founder-hero of Athens, famed for slaying the Minotaur."
   },
   {
@@ -647,12 +923,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Nature",
-    "hp": 85,
-    "atk": 13,
-    "def": 8,
-    "spd": 14,
-    "passive_ability_name": "Master Musician",
-    "passive_ability_desc": "Has a chance to prevent an enemy from using their abilities for 1 turn.",
+    "hp": 850,
+    "atk": 130,
+    "def": 80,
+    "spd": 140,
     "lore": "A legendary musician and poet whose music could charm all living things."
   },
   {
@@ -663,12 +937,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 100,
-    "atk": 14,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Leader of the Argonauts",
-    "passive_ability_desc": "Increases the Speed of all allies on Expeditions.",
+    "hp": 1000,
+    "atk": 140,
+    "def": 90,
+    "spd": 130,
     "lore": "The leader of the Argonauts in their quest for the Golden Fleece."
   },
   {
@@ -679,12 +951,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Nature",
-    "hp": 90,
-    "atk": 13,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "God of the Wild",
-    "passive_ability_desc": "Increases the chance of encountering rare 'Opportunities' during Expeditions.",
+    "hp": 900,
+    "atk": 130,
+    "def": 80,
+    "spd": 150,
     "lore": "The god of the wild, shepherds and flocks, and rustic music."
   },
   {
@@ -695,12 +965,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Dark",
-    "hp": 110,
-    "atk": 10,
-    "def": 13,
-    "spd": 10,
-    "passive_ability_name": "Ferryman of Styx",
-    "passive_ability_desc": "Allies who are revived return with slightly more HP.",
+    "hp": 1100,
+    "atk": 100,
+    "def": 130,
+    "spd": 100,
     "lore": "The ferryman of Hades who carries souls of the newly deceased across the river Styx."
   },
   {
@@ -711,12 +979,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Nature",
-    "hp": 100,
-    "atk": 14,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "The Teacher",
-    "passive_ability_desc": "All 'B' and 'C' tier allies on the team gain a small boost to all stats.",
+    "hp": 1000,
+    "atk": 140,
+    "def": 100,
+    "spd": 120,
     "lore": "A wise and just Centaur, known for his knowledge and skill in medicine."
   },
   {
@@ -727,12 +993,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 95,
-    "atk": 15,
-    "def": 8,
-    "spd": 14,
-    "passive_ability_name": "Divine Retribution",
-    "passive_ability_desc": "Reflects a percentage of damage taken back at attackers who land a critical hit.",
+    "hp": 950,
+    "atk": 150,
+    "def": 80,
+    "spd": 140,
     "lore": "The goddess who enacts retribution against those who succumb to hubris."
   },
   {
@@ -743,12 +1007,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Light",
-    "hp": 90,
-    "atk": 12,
-    "def": 9,
-    "spd": 16,
-    "passive_ability_name": "Goddess of Victory",
-    "passive_ability_desc": "The entire team gains a small boost to all stats for 1 turn after defeating an enemy.",
+    "hp": 900,
+    "atk": 120,
+    "def": 90,
+    "spd": 160,
     "lore": "The goddess who personified victory, also known as the Winged Goddess."
   },
   {
@@ -758,13 +1020,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 95,
-    "atk": 16,
-    "def": 8,
-    "spd": 13,
-    "passive_ability_name": "Goddess of Witchcraft",
-    "passive_ability_desc": "Increases the duration of negative status effects on enemies by 1 turn.",
+    "element": "Dark",
+    "hp": 950,
+    "atk": 160,
+    "def": 80,
+    "spd": 130,
     "lore": "A goddess associated with magic, witchcraft, the night, and ghosts."
   },
   {
@@ -775,12 +1035,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Light",
-    "hp": 90,
-    "atk": 11,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "God of Medicine",
-    "passive_ability_desc": "Greatly increases the effectiveness of all healing abilities.",
+    "hp": 900,
+    "atk": 110,
+    "def": 100,
+    "spd": 120,
     "lore": "The Greek god of medicine, son of Apollo."
   },
   {
@@ -790,13 +1048,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 95,
-    "atk": 12,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "God of Dreams",
-    "passive_ability_desc": "Has a chance to put an enemy to sleep for 1 turn with each ability used.",
+    "element": "Dark",
+    "hp": 950,
+    "atk": 120,
+    "def": 90,
+    "spd": 130,
     "lore": "The god of dreams, who can shape and appear in the dreams of mortals."
   },
   {
@@ -806,13 +1062,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 90,
-    "atk": 10,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "God of Sleep",
-    "passive_ability_desc": "Attacks against sleeping enemies are guaranteed critical hits.",
+    "element": "Dark",
+    "hp": 900,
+    "atk": 100,
+    "def": 80,
+    "spd": 150,
     "lore": "The personification of sleep, the twin brother of Thanatos."
   },
   {
@@ -823,12 +1077,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 100,
-    "atk": 15,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "God of Death",
-    "passive_ability_desc": "Instantly defeats non-boss enemies below 10% HP.",
+    "hp": 1000,
+    "atk": 150,
+    "def": 90,
+    "spd": 140,
     "lore": "The personification of peaceful death."
   },
   {
@@ -839,12 +1091,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Light",
-    "hp": 120,
-    "atk": 11,
-    "def": 15,
-    "spd": 10,
-    "passive_ability_name": "The Watcher",
-    "passive_ability_desc": "Grants the team a high chance to avoid being ambushed during Expeditions.",
+    "hp": 1200,
+    "atk": 110,
+    "def": 150,
+    "spd": 100,
     "lore": "The ever-vigilant guardian of the Bifröst bridge, who can see for a hundred leagues."
   },
   {
@@ -855,12 +1105,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 115,
-    "atk": 15,
-    "def": 12,
-    "spd": 11,
-    "passive_ability_name": "God of Law",
-    "passive_ability_desc": "Has an increased chance to land critical hits against 'Chaotic' element enemies.",
+    "hp": 1150,
+    "atk": 150,
+    "def": 120,
+    "spd": 110,
     "lore": "The one-handed god of law, justice, and heroic glory in Norse mythology."
   },
   {
@@ -871,12 +1119,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Light",
-    "hp": 90,
-    "atk": 12,
-    "def": 9,
-    "spd": 15,
-    "passive_ability_name": "Chooser of the Slain",
-    "passive_ability_desc": "If an ally is defeated, this character gains a temporary Speed boost.",
+    "hp": 900,
+    "atk": 120,
+    "def": 90,
+    "spd": 150,
     "lore": "A host of female figures who guide the souls of chosen warriors to Valhalla."
   },
   {
@@ -887,12 +1133,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Ice",
-    "hp": 95,
-    "atk": 14,
-    "def": 8,
-    "spd": 14,
-    "passive_ability_name": "Huntress of Winter",
-    "passive_ability_desc": "Deals increased damage to enemies that are slowed or stunned.",
+    "hp": 950,
+    "atk": 140,
+    "def": 80,
+    "spd": 140,
     "lore": "Norse goddess associated with bowhunting, skiing, winter, and mountains."
   },
   {
@@ -903,12 +1147,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Light",
-    "hp": 130,
-    "atk": 10,
-    "def": 16,
-    "spd": 9,
-    "passive_ability_name": "God of Light",
-    "passive_ability_desc": "Immune to all status effects for the first 2 turns of battle.",
+    "hp": 1300,
+    "atk": 100,
+    "def": 160,
+    "spd": 90,
     "lore": "The beloved son of Odin and Frigg, known for his beauty and invulnerability."
   },
   {
@@ -919,12 +1161,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Ice",
-    "hp": 95,
-    "atk": 15,
-    "def": 8,
-    "spd": 14,
-    "passive_ability_name": "Glory of the Hunt",
-    "passive_ability_desc": "Increases the chance of finding rare crafting materials during Expeditions.",
+    "hp": 950,
+    "atk": 150,
+    "def": 80,
+    "spd": 140,
     "lore": "A god associated with skiing, archery, and hunting."
   },
   {
@@ -935,12 +1175,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Light",
-    "hp": 90,
-    "atk": 12,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "God of Poetry",
-    "passive_ability_desc": "Increases the duration of positive status effects on all allies by 1 turn.",
+    "hp": 900,
+    "atk": 120,
+    "def": 90,
+    "spd": 130,
     "lore": "The skaldic god of poetry in Norse mythology."
   },
   {
@@ -951,12 +1189,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 120,
-    "atk": 16,
-    "def": 13,
-    "spd": 9,
-    "passive_ability_name": "The Silent God",
-    "passive_ability_desc": "Gains a massive Attack boost for one turn after an ally is defeated.",
+    "hp": 1200,
+    "atk": 160,
+    "def": 130,
+    "spd": 90,
     "lore": "A son of Odin, destined to avenge his father's death by killing Fenrir."
   },
   {
@@ -967,12 +1203,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 115,
-    "atk": 11,
-    "def": 14,
-    "spd": 11,
-    "passive_ability_name": "Golden Hair",
-    "passive_ability_desc": "Increases the amount of Gold found on Expeditions by 5%.",
+    "hp": 1150,
+    "atk": 110,
+    "def": 140,
+    "spd": 110,
     "lore": "A goddess associated with earth and the wife of Thor, known for her golden hair."
   },
   {
@@ -983,12 +1217,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Water",
-    "hp": 90,
-    "atk": 13,
-    "def": 9,
-    "spd": 11,
-    "passive_ability_name": "Well of Wisdom",
-    "passive_ability_desc": "Provides a chance to start the battle with extra energy for abilities.",
+    "hp": 900,
+    "atk": 130,
+    "def": 90,
+    "spd": 110,
     "lore": "A figure known for his knowledge and wisdom, beheaded and carried by Odin."
   },
   {
@@ -999,12 +1231,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Light",
-    "hp": 110,
-    "atk": 12,
-    "def": 14,
-    "spd": 12,
-    "passive_ability_name": "God of Justice",
-    "passive_ability_desc": "When this character is attacked, the attacker has a chance to be disarmed for 1 turn.",
+    "hp": 1100,
+    "atk": 120,
+    "def": 140,
+    "spd": 120,
     "lore": "The god of justice and reconciliation in Norse mythology."
   },
   {
@@ -1015,12 +1245,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Nature",
-    "hp": 100,
-    "atk": 10,
-    "def": 12,
-    "spd": 13,
-    "passive_ability_name": "Golden Apples",
-    "passive_ability_desc": "Provides a powerful one-time heal to the entire team when their average HP drops below 30%.",
+    "hp": 1000,
+    "atk": 100,
+    "def": 120,
+    "spd": 130,
     "lore": "The goddess who possesses the apples of youth that grant the gods their immortality."
   },
   {
@@ -1031,12 +1259,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 80,
-    "atk": 10,
-    "def": 7,
-    "spd": 8,
-    "passive_ability_name": "Frenzied Charge",
-    "passive_ability_desc": "Has slightly increased Attack on the first turn of combat.",
+    "hp": 800,
+    "atk": 100,
+    "def": 70,
+    "spd": 80,
     "lore": "A creature with the upper body of a human and the lower body of a horse."
   },
   {
@@ -1047,12 +1273,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Nature",
-    "hp": 70,
-    "atk": 8,
-    "def": 6,
-    "spd": 12,
-    "passive_ability_name": "Reveler's Tune",
-    "passive_ability_desc": "Has a small chance to slightly lower the speed of a random enemy.",
+    "hp": 700,
+    "atk": 80,
+    "def": 60,
+    "spd": 120,
     "lore": "A troop of male companions of Dionysus with goat-like features."
   },
   {
@@ -1063,12 +1287,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 90,
-    "atk": 9,
-    "def": 9,
-    "spd": 5,
-    "passive_ability_name": "Unwavering Gaze",
-    "passive_ability_desc": "High resistance to being stunned or paralyzed.",
+    "hp": 900,
+    "atk": 90,
+    "def": 90,
+    "spd": 50,
     "lore": "A member of a primordial race of giants, each with a single eye in the center of its forehead."
   },
   {
@@ -1079,12 +1301,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 85,
-    "atk": 11,
-    "def": 8,
-    "spd": 6,
-    "passive_ability_name": "Labyrinth Dweller",
-    "passive_ability_desc": "Deals more damage in enclosed 'cave' or 'dungeon' type expeditions.",
+    "hp": 850,
+    "atk": 110,
+    "def": 80,
+    "spd": 60,
     "lore": "A monstrous creature with the head of a bull and the body of a man."
   },
   {
@@ -1095,12 +1315,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 65,
-    "atk": 9,
-    "def": 5,
-    "spd": 13,
-    "passive_ability_name": "Violent Gust",
-    "passive_ability_desc": "Has a chance to attack twice with basic attacks.",
+    "hp": 650,
+    "atk": 90,
+    "def": 50,
+    "spd": 130,
     "lore": "A winged spirit known for stealing food and carrying evildoers to their punishment."
   },
   {
@@ -1111,12 +1329,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Water",
-    "hp": 60,
-    "atk": 11,
-    "def": 4,
-    "spd": 11,
-    "passive_ability_name": "Luring Song",
-    "passive_ability_desc": "Has a chance to cause enemies to attack each other with basic attacks.",
+    "hp": 600,
+    "atk": 110,
+    "def": 40,
+    "spd": 110,
     "lore": "Dangerous creatures who lured nearby sailors with their enchanting music."
   },
   {
@@ -1127,12 +1343,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Dark",
-    "hp": 80,
-    "atk": 8,
-    "def": 10,
-    "spd": 7,
-    "passive_ability_name": "Serpentine Hide",
-    "passive_ability_desc": "Reflects a small amount of damage taken back at the attacker.",
+    "hp": 800,
+    "atk": 80,
+    "def": 100,
+    "spd": 70,
     "lore": "A monstrous female figure, Medusa was the most famous among them."
   },
   {
@@ -1143,12 +1357,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Nature",
-    "hp": 60,
-    "atk": 9,
-    "def": 6,
-    "spd": 10,
-    "passive_ability_name": "Nature's Blessing",
-    "passive_ability_desc": "Slightly increases the amount of Gold found on Expeditions.",
+    "hp": 600,
+    "atk": 90,
+    "def": 60,
+    "spd": 100,
     "lore": "A minor female nature deity typically associated with a particular location or landform."
   },
   {
@@ -1159,12 +1371,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Nature",
-    "hp": 65,
-    "atk": 8,
-    "def": 7,
-    "spd": 9,
-    "passive_ability_name": "Forest Spirit",
-    "passive_ability_desc": "Slightly increases the amount of crafting materials found on Expeditions.",
+    "hp": 650,
+    "atk": 80,
+    "def": 70,
+    "spd": 90,
     "lore": "A tree nymph or tree spirit in Greek mythology."
   },
   {
@@ -1175,12 +1385,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 85,
-    "atk": 10,
-    "def": 8,
-    "spd": 7,
-    "passive_ability_name": "Monstrous Fusion",
-    "passive_ability_desc": "Has a chance to attack with Fire, Physical, or Dark damage.",
+    "hp": 850,
+    "atk": 100,
+    "def": 80,
+    "spd": 70,
     "lore": "A monstrous fire-breathing hybrid creature, composed of the parts of more than one animal."
   },
   {
@@ -1191,12 +1399,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Water",
-    "hp": 100,
-    "atk": 7,
-    "def": 10,
-    "spd": 4,
-    "passive_ability_name": "Regenerate",
-    "passive_ability_desc": "Recovers a small amount of HP at the start of each turn.",
+    "hp": 1000,
+    "atk": 70,
+    "def": 100,
+    "spd": 40,
     "lore": "A serpentine water monster with many heads that would regrow if severed."
   },
   {
@@ -1207,12 +1413,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Dark",
-    "hp": 95,
-    "atk": 9,
-    "def": 9,
-    "spd": 6,
-    "passive_ability_name": "Hound of Hades",
-    "passive_ability_desc": "Prevents enemies from fleeing from combat.",
+    "hp": 950,
+    "atk": 90,
+    "def": 90,
+    "spd": 60,
     "lore": "The multi-headed dog that guards the gates of the Underworld."
   },
   {
@@ -1223,12 +1427,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 75,
-    "atk": 9,
-    "def": 7,
-    "spd": 13,
-    "passive_ability_name": "Noble Beast",
-    "passive_ability_desc": "Increases the chance of finding rare items during Expeditions by 1%.",
+    "hp": 750,
+    "atk": 90,
+    "def": 70,
+    "spd": 130,
     "lore": "A legendary creature with the body of a lion and the head and wings of an eagle."
   },
   {
@@ -1239,12 +1441,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Light",
-    "hp": 70,
-    "atk": 7,
-    "def": 6,
-    "spd": 15,
-    "passive_ability_name": "Winged Steed",
-    "passive_ability_desc": "Greatly reduces the duration of Expeditions this character is on.",
+    "hp": 700,
+    "atk": 70,
+    "def": 60,
+    "spd": 150,
     "lore": "A mythical winged divine horse, one of the most recognized creatures in Greek mythology."
   },
   {
@@ -1255,12 +1455,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 120,
-    "atk": 9,
-    "def": 12,
-    "spd": 3,
-    "passive_ability_name": "Bronze Automaton",
-    "passive_ability_desc": "Immune to 'Poison' and 'Bleed' status effects.",
+    "hp": 1200,
+    "atk": 90,
+    "def": 120,
+    "spd": 30,
     "lore": "A giant automaton made of bronze, crafted by Hephaestus to protect Europa."
   },
   {
@@ -1271,12 +1469,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Dark",
-    "hp": 80,
-    "atk": 10,
-    "def": 7,
-    "spd": 8,
-    "passive_ability_name": "Mother of Monsters",
-    "passive_ability_desc": "Summons a weak 'Monster' ally when her health first drops below 50%.",
+    "hp": 800,
+    "atk": 100,
+    "def": 70,
+    "spd": 80,
     "lore": "A monster, half-woman and half-snake, who became the mother of most Greek monsters."
   },
   {
@@ -1287,12 +1483,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 100,
-    "atk": 8,
-    "def": 11,
-    "spd": 5,
-    "passive_ability_name": "Guardian of the Hesperides",
-    "passive_ability_desc": "Has a chance to disarm an opponent for 1 turn, preventing ability use.",
+    "hp": 1000,
+    "atk": 80,
+    "def": 110,
+    "spd": 50,
     "lore": "The serpent-like dragon that guarded the golden apples in the Garden of the Hesperides."
   },
   {
@@ -1303,12 +1497,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Light",
-    "hp": 100,
-    "atk": 7,
-    "def": 11,
-    "spd": 6,
-    "passive_ability_name": "All-Seeing",
-    "passive_ability_desc": "High resistance to being surprised or ambushed. Cannot be blinded.",
+    "hp": 1000,
+    "atk": 70,
+    "def": 110,
+    "spd": 60,
     "lore": "A hundred-eyed giant, whose eyes were transplanted to the peacock's tail."
   },
   {
@@ -1319,12 +1511,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Wind",
-    "hp": 75,
-    "atk": 10,
-    "def": 7,
-    "spd": 10,
-    "passive_ability_name": "Riddle of the Ages",
-    "passive_ability_desc": "Has a chance to confuse an enemy, causing them to attack a random target.",
+    "hp": 750,
+    "atk": 100,
+    "def": 70,
+    "spd": 100,
     "lore": "A mythical creature with the head of a human and the body of a lion."
   },
   {
@@ -1335,12 +1525,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 130,
-    "atk": 12,
-    "def": 12,
-    "spd": 2,
-    "passive_ability_name": "Hundred-Handed One",
-    "passive_ability_desc": "Can attack multiple random enemies with its basic attack.",
+    "hp": 1300,
+    "atk": 120,
+    "def": 120,
+    "spd": 20,
     "lore": "Giants of incredible strength and ferocity, with one hundred hands and fifty heads."
   },
   {
@@ -1351,12 +1539,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Water",
-    "hp": 80,
-    "atk": 10,
-    "def": 8,
-    "spd": 9,
-    "passive_ability_name": "Son of Poseidon",
-    "passive_ability_desc": "Deals increased damage in 'Water' or 'Ocean' type expeditions.",
+    "hp": 800,
+    "atk": 100,
+    "def": 80,
+    "spd": 90,
     "lore": "A Greek god of the sea, the son of Poseidon and Amphitrite."
   },
   {
@@ -1367,12 +1553,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Water",
-    "hp": 70,
-    "atk": 8,
-    "def": 7,
-    "spd": 14,
-    "passive_ability_name": "Sea Horse",
-    "passive_ability_desc": "Increases the speed of all allies on 'Water' type expeditions.",
+    "hp": 700,
+    "atk": 80,
+    "def": 70,
+    "spd": 140,
     "lore": "A mythological creature shared by Phoenician, Greek, and Etruscan mythologies."
   },
   {
@@ -1383,12 +1567,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 65,
-    "atk": 11,
-    "def": 5,
-    "spd": 13,
-    "passive_ability_name": "Demonic Seduction",
-    "passive_ability_desc": "Has a chance to drain a small amount of HP from an enemy with each attack.",
+    "hp": 650,
+    "atk": 110,
+    "def": 50,
+    "spd": 130,
     "lore": "A demigoddess of Greek mythology, known for seducing men before eating them."
   },
   {
@@ -1399,12 +1581,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 70,
-    "atk": 9,
-    "def": 6,
-    "spd": 15,
-    "passive_ability_name": "Uncatchable Hound",
-    "passive_ability_desc": "Has a very high chance to dodge the first attack directed at it.",
+    "hp": 700,
+    "atk": 90,
+    "def": 60,
+    "spd": 150,
     "lore": "A Greek mythological dog that always caught its prey."
   },
   {
@@ -1415,12 +1595,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Dark",
-    "hp": 100,
-    "atk": 6,
-    "def": 9,
-    "spd": 5,
-    "passive_ability_name": "Undying Will",
-    "passive_ability_desc": "Has a small chance to survive a fatal blow with 1 HP.",
+    "hp": 1000,
+    "atk": 60,
+    "def": 90,
+    "spd": 50,
     "lore": "An undead creature from Norse mythology that guards its burial mound."
   },
   {
@@ -1431,12 +1609,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Ice",
-    "hp": 110,
-    "atk": 8,
-    "def": 10,
-    "spd": 4,
-    "passive_ability_name": "Rime Armor",
-    "passive_ability_desc": "Takes reduced damage from 'Fire' element attacks.",
+    "hp": 1100,
+    "atk": 80,
+    "def": 100,
+    "spd": 40,
     "lore": "A giant from Jötunheimr, born of the primordial ice of Niflheim."
   },
   {
@@ -1447,12 +1623,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 105,
-    "atk": 9,
-    "def": 8,
-    "spd": 5,
-    "passive_ability_name": "Searing Presence",
-    "passive_ability_desc": "Nearby enemies take a small amount of Fire damage each turn.",
+    "hp": 1050,
+    "atk": 90,
+    "def": 80,
+    "spd": 50,
     "lore": "A giant from Muspelheim, the realm of fire."
   },
   {
@@ -1463,12 +1637,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 90,
-    "atk": 10,
-    "def": 7,
-    "spd": 6,
-    "passive_ability_name": "Brutish Strength",
-    "passive_ability_desc": "Ignores a small percentage of the enemy's defense.",
+    "hp": 900,
+    "atk": 100,
+    "def": 70,
+    "spd": 60,
     "lore": "A class of being in Norse mythology, often depicted as slow and dim-witted."
   },
   {
@@ -1479,12 +1651,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Light",
-    "hp": 65,
-    "atk": 10,
-    "def": 5,
-    "spd": 12,
-    "passive_ability_name": "Alfheim's Grace",
-    "passive_ability_desc": "Increases the effectiveness of healing abilities on the team by 5%.",
+    "hp": 650,
+    "atk": 100,
+    "def": 50,
+    "spd": 120,
     "lore": "Fair creatures who live in Alfheim, the realm of the elves."
   },
   {
@@ -1494,13 +1664,11 @@
     "pantheon": "Norse",
     "rarity": "C",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 60,
-    "atk": 11,
-    "def": 4,
-    "spd": 13,
-    "passive_ability_name": "Svartalfheim's Craft",
-    "passive_ability_desc": "Increases the chance of successfully crafting rare items.",
+    "element": "Dark",
+    "hp": 600,
+    "atk": 110,
+    "def": 40,
+    "spd": 130,
     "lore": "Also known as Dvergar (dwarves), master smiths who dwell underground."
   },
   {
@@ -1511,12 +1679,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 80,
-    "atk": 8,
-    "def": 11,
-    "spd": 6,
-    "passive_ability_name": "Master Craftsman",
-    "passive_ability_desc": "Reduces the resource cost of crafting Heirlooms by a small amount.",
+    "hp": 800,
+    "atk": 80,
+    "def": 110,
+    "spd": 60,
     "lore": "Beings associated with mountains, wisdom, and smithing."
   },
   {
@@ -1527,12 +1693,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Light",
-    "hp": 75,
-    "atk": 10,
-    "def": 8,
-    "spd": 9,
-    "passive_ability_name": "Valhalla's Chosen",
-    "passive_ability_desc": "Gains a temporary Attack boost if a 'Valkyrie' is on the same team.",
+    "hp": 750,
+    "atk": 100,
+    "def": 80,
+    "spd": 90,
     "lore": "The spirits of glorious warriors who feast in Valhalla, awaiting Ragnarok."
   },
   {
@@ -1543,12 +1707,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 70,
-    "atk": 6,
-    "def": 7,
-    "spd": 18,
-    "passive_ability_name": "Odin's Steed",
-    "passive_ability_desc": "Dramatically reduces the duration of Expeditions this character is on.",
+    "hp": 700,
+    "atk": 60,
+    "def": 70,
+    "spd": 180,
     "lore": "Odin's eight-legged horse, the swiftest of all horses."
   },
   {
@@ -1558,13 +1720,11 @@
     "pantheon": "Norse",
     "rarity": "C",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 50,
-    "atk": 8,
-    "def": 4,
-    "spd": 15,
-    "passive_ability_name": "Thought",
-    "passive_ability_desc": "Provides a small chance to reveal one of an enemy's abilities at the start of battle.",
+    "element": "Dark",
+    "hp": 500,
+    "atk": 80,
+    "def": 40,
+    "spd": 150,
     "lore": "One of Odin's two ravens, who flies across the world to bring him information."
   },
   {
@@ -1574,13 +1734,11 @@
     "pantheon": "Norse",
     "rarity": "C",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 50,
-    "atk": 8,
-    "def": 4,
-    "spd": 15,
-    "passive_ability_name": "Memory",
-    "passive_ability_desc": "Provides a small chance to reduce the cooldown of an ally's ability.",
+    "element": "Dark",
+    "hp": 500,
+    "atk": 80,
+    "def": 40,
+    "spd": 150,
     "lore": "One of Odin's two ravens, who flies across the world to bring him information."
   },
   {
@@ -1591,12 +1749,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 85,
-    "atk": 10,
-    "def": 7,
-    "spd": 7,
-    "passive_ability_name": "Corpse Eater",
-    "passive_ability_desc": "Deals bonus damage to enemies that are below 25% HP.",
+    "hp": 850,
+    "atk": 100,
+    "def": 70,
+    "spd": 70,
     "lore": "A dragon who gnaws at a root of the world tree, Yggdrasil."
   },
   {
@@ -1607,12 +1763,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 95,
-    "atk": 10,
-    "def": 8,
-    "spd": 6,
-    "passive_ability_name": "Giant's Strength",
-    "passive_ability_desc": "Basic attacks have a chance to briefly stun the enemy.",
+    "hp": 950,
+    "atk": 100,
+    "def": 80,
+    "spd": 60,
     "lore": "A member of the race of giants in Norse mythology."
   },
   {
@@ -1623,12 +1777,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 75,
-    "atk": 10,
-    "def": 6,
-    "spd": 11,
-    "passive_ability_name": "The Ravenous",
-    "passive_ability_desc": "Restores a small amount of HP upon defeating an enemy.",
+    "hp": 750,
+    "atk": 100,
+    "def": 60,
+    "spd": 110,
     "lore": "One of Odin's two wolves, to whom he gives all his food in Valhalla."
   },
   {
@@ -1639,12 +1791,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 75,
-    "atk": 10,
-    "def": 6,
-    "spd": 11,
-    "passive_ability_name": "The Greedy",
-    "passive_ability_desc": "Restores a small amount of energy upon defeating an enemy.",
+    "hp": 750,
+    "atk": 100,
+    "def": 60,
+    "spd": 110,
     "lore": "One of Odin's two wolves, a companion to Geri."
   },
   {
@@ -1655,12 +1805,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 90,
-    "atk": 8,
-    "def": 9,
-    "spd": 7,
-    "passive_ability_name": "Teeth-Barer",
-    "passive_ability_desc": "If defeated, returns to life once with 10% HP.",
+    "hp": 900,
+    "atk": 80,
+    "def": 90,
+    "spd": 70,
     "lore": "One of the two goats that pull Thor's chariot."
   },
   {
@@ -1671,12 +1819,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 90,
-    "atk": 8,
-    "def": 9,
-    "spd": 7,
-    "passive_ability_name": "Teeth-Grinder",
-    "passive_ability_desc": "If an ally is defeated, this character gains a temporary Defense boost.",
+    "hp": 900,
+    "atk": 80,
+    "def": 90,
+    "spd": 70,
     "lore": "One of the two goats that pull Thor's chariot."
   },
   {
@@ -1687,12 +1833,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Nature",
-    "hp": 60,
-    "atk": 7,
-    "def": 5,
-    "spd": 18,
-    "passive_ability_name": "The Messenger",
-    "passive_ability_desc": "Has a chance to pass a positive buff from one ally to another.",
+    "hp": 600,
+    "atk": 70,
+    "def": 50,
+    "spd": 180,
     "lore": "A squirrel who runs up and down the world tree Yggdrasil, carrying messages."
   },
   {
@@ -1703,12 +1847,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 80,
-    "atk": 11,
-    "def": 7,
-    "spd": 10,
-    "passive_ability_name": "Bloodstained Hound",
-    "passive_ability_desc": "Deals increased damage to enemies that are currently bleeding.",
+    "hp": 800,
+    "atk": 110,
+    "def": 70,
+    "spd": 100,
     "lore": "A wolf or dog associated with both Hel and Ragnarök, described as a blood-stained guardian."
   },
   {
@@ -1719,12 +1861,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Fire",
-    "hp": 95,
-    "atk": 9,
-    "def": 10,
-    "spd": 6,
-    "passive_ability_name": "Dragon's Hoard",
-    "passive_ability_desc": "Slightly increases the amount of Gold found on Expeditions.",
+    "hp": 950,
+    "atk": 90,
+    "def": 100,
+    "spd": 60,
     "lore": "A son of the dwarf king Hreidmar, who turned into a dragon out of greed."
   },
   {
@@ -1735,12 +1875,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 85,
-    "atk": 12,
-    "def": 5,
-    "spd": 9,
-    "passive_ability_name": "Uncontrollable Rage",
-    "passive_ability_desc": "Attack is high, but has a chance to attack a random target, including allies.",
+    "hp": 850,
+    "atk": 120,
+    "def": 50,
+    "spd": 90,
     "lore": "Norse warriors who are reported to have fought in a trance-like fury."
   },
   {
@@ -1750,13 +1888,11 @@
     "pantheon": "Norse",
     "rarity": "C",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 65,
-    "atk": 10,
-    "def": 6,
-    "spd": 11,
-    "passive_ability_name": "Shamanic Magic",
-    "passive_ability_desc": "Increases the effectiveness of status effects applied by the team.",
+    "element": "Dark",
+    "hp": 650,
+    "atk": 100,
+    "def": 60,
+    "spd": 110,
     "lore": "A term for a type of sorcery practiced in Norse society during the Late Scandinavian Iron Age."
   },
   {
@@ -1767,12 +1903,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Light",
-    "hp": 60,
-    "atk": 9,
-    "def": 6,
-    "spd": 12,
-    "passive_ability_name": "The Careful One",
-    "passive_ability_desc": "Increases the chance of avoiding 'Hazard' events during Expeditions.",
+    "hp": 600,
+    "atk": 90,
+    "def": 60,
+    "spd": 120,
     "lore": "A goddess associated with wisdom, so clever that nothing can be hidden from her."
   },
   {
@@ -1783,12 +1917,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Nature",
-    "hp": 70,
-    "atk": 9,
-    "def": 7,
-    "spd": 13,
-    "passive_ability_name": "Forest's Allure",
-    "passive_ability_desc": "Has a chance to charm an enemy, causing them to skip their turn.",
+    "hp": 700,
+    "atk": 90,
+    "def": 70,
+    "spd": 130,
     "lore": "A seductive forest creature found in Scandinavian folklore."
   },
   {
@@ -1798,14 +1930,26 @@
     "pantheon": "Greco-Roman",
     "rarity": "A",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 120,
-    "atk": 18,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "Primordial Darkness",
-    "passive_ability_desc": "Reduces the effectiveness of 'Light' element abilities for all enemies.",
-    "lore": "The primordial god of darkness, one of the first five beings in existence."
+    "element": "Dark",
+    "hp": 1200,
+    "atk": 180,
+    "def": 100,
+    "spd": 120,
+    "lore": "The primordial god of darkness, one of the first five beings in existence.",
+    "passive": {
+      "name": "Primordial Darkness",
+      "type": "Aura",
+      "params": {
+        "enemy_debuff": {
+          "debuff": "damage_down",
+          "valuePct": 0.15,
+          "condition": {
+            "element_is": "Light"
+          }
+        }
+      },
+      "desc": "Reduces the damage dealt by all Light element enemies by 15%."
+    }
   },
   {
     "id": 173,
@@ -1815,13 +1959,22 @@
     "rarity": "S",
     "class": "Guardian",
     "element": "Dark",
-    "hp": 190,
-    "atk": 12,
-    "def": 20,
-    "spd": 4,
-    "passive_ability_name": "The Pit",
-    "passive_ability_desc": "Enemies that attack this character have a chance to become 'Trapped', reducing their speed.",
-    "lore": "The primordial deity of the deep abyss, a great pit in the depths of the underworld."
+    "hp": 1900,
+    "atk": 120,
+    "def": 200,
+    "spd": 40,
+    "lore": "The primordial deity of the deep abyss, a great pit in the depths of the underworld.",
+    "passive": {
+      "name": "The Pit",
+      "type": "OnBeingAttacked",
+      "params": {
+        "debuff": "speed_down",
+        "valuePct": 0.1,
+        "chancePct": 0.5,
+        "durationTurns": 2
+      },
+      "desc": "Attackers have a 50% chance to have their SPD lowered by 10% for 2 turns."
+    }
   },
   {
     "id": 174,
@@ -1831,13 +1984,23 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Water",
-    "hp": 145,
-    "atk": 13,
-    "def": 15,
-    "spd": 8,
-    "passive_ability_name": "Primordial Sea",
-    "passive_ability_desc": "All 'Water' element allies on the team gain a small defensive boost.",
-    "lore": "The primordial god of the sea, father of the fish and other sea creatures."
+    "hp": 1450,
+    "atk": 130,
+    "def": 150,
+    "spd": 80,
+    "lore": "The primordial god of the sea, father of the fish and other sea creatures.",
+    "passive": {
+      "name": "Primordial Sea",
+      "type": "TeamBuff",
+      "params": {
+        "condition": {
+          "element_is": "Water"
+        },
+        "stat": "DEF",
+        "valuePct": 0.15
+      },
+      "desc": "All Water allies gain +15% DEF."
+    }
   },
   {
     "id": 175,
@@ -1847,13 +2010,21 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Water",
-    "hp": 125,
-    "atk": 16,
-    "def": 12,
-    "spd": 10,
-    "passive_ability_name": "World River",
-    "passive_ability_desc": "At the end of each turn, provides a small amount of healing to all allies.",
-    "lore": "The Titan god of the great, earth-encircling River Okeanos."
+    "hp": 1250,
+    "atk": 160,
+    "def": 120,
+    "spd": 100,
+    "lore": "The Titan god of the great, earth-encircling River Okeanos.",
+    "passive": {
+      "name": "World River",
+      "type": "OnTurnEnd",
+      "params": {
+        "effect": "Heal",
+        "target": "allies",
+        "valuePct": 0.05
+      },
+      "desc": "Heals all allies for 5% of their max HP at the end of his turn."
+    }
   },
   {
     "id": 176,
@@ -1863,13 +2034,21 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Light",
-    "hp": 130,
-    "atk": 17,
-    "def": 11,
-    "spd": 12,
-    "passive_ability_name": "Titan of Light",
-    "passive_ability_desc": "Basic attacks have a chance to 'Dazzle' the enemy, reducing their accuracy.",
-    "lore": "The Titan god of heavenly light, one of the four pillars that hold the heavens."
+    "hp": 1300,
+    "atk": 170,
+    "def": 110,
+    "spd": 120,
+    "lore": "The Titan god of heavenly light, one of the four pillars that hold the heavens.",
+    "passive": {
+      "name": "Titan of Light",
+      "type": "OnHitEffect",
+      "params": {
+        "debuff": "accuracy_down",
+        "chancePct": 0.25,
+        "durationTurns": 2
+      },
+      "desc": "Attacks have a 25% chance to lower the target's Accuracy for 2 turns."
+    }
   },
   {
     "id": 177,
@@ -1879,12 +2058,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Light",
-    "hp": 115,
-    "atk": 12,
-    "def": 15,
-    "spd": 10,
-    "passive_ability_name": "Divine Law",
-    "passive_ability_desc": "Increases the resistance to status effects for the entire team.",
+    "hp": 1150,
+    "atk": 120,
+    "def": 150,
+    "spd": 100,
     "lore": "The Titaness of divine law and order, the personification of justice."
   },
   {
@@ -1894,13 +2071,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 100,
-    "atk": 14,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Goddess of Memory",
-    "passive_ability_desc": "Has a chance to repeat the last ability used by an ally.",
+    "element": "Dark",
+    "hp": 1000,
+    "atk": 140,
+    "def": 90,
+    "spd": 130,
     "lore": "The Titaness of memory and remembrance, mother of the Nine Muses."
   },
   {
@@ -1911,12 +2086,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Light",
-    "hp": 105,
-    "atk": 15,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "The Bright One",
-    "passive_ability_desc": "Increases the critical hit chance of all 'Light' element allies.",
+    "hp": 1050,
+    "atk": 150,
+    "def": 90,
+    "spd": 140,
     "lore": "The Titaness of the 'bright' intellect and prophecy, grandmother of Apollo and Artemis."
   },
   {
@@ -1927,12 +2100,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Water",
-    "hp": 110,
-    "atk": 14,
-    "def": 11,
-    "spd": 12,
-    "passive_ability_name": "Mother of Rivers",
-    "passive_ability_desc": "Increases the power of 'Water' element abilities for all allies.",
+    "hp": 1100,
+    "atk": 140,
+    "def": 110,
+    "spd": 120,
     "lore": "The Titaness of the primal font of fresh water which nourishes the earth."
   },
   {
@@ -1943,12 +2114,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 120,
-    "atk": 15,
-    "def": 12,
-    "spd": 11,
-    "passive_ability_name": "The Ram",
-    "passive_ability_desc": "Attacks have a higher chance to land as critical hits.",
+    "hp": 1200,
+    "atk": 150,
+    "def": 120,
+    "spd": 110,
     "lore": "A Titan associated with the heavenly constellations."
   },
   {
@@ -1958,13 +2127,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 105,
-    "atk": 16,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Pillar of the North",
-    "passive_ability_desc": "Increases the magical attack of all allies on the team.",
+    "element": "Dark",
+    "hp": 1050,
+    "atk": 160,
+    "def": 90,
+    "spd": 130,
     "lore": "The Titan of intelligence and the inquisitive mind."
   },
   {
@@ -1975,12 +2142,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 125,
-    "atk": 16,
-    "def": 11,
-    "spd": 11,
-    "passive_ability_name": "The Piercer",
-    "passive_ability_desc": "Basic attacks have a chance to apply a 'Bleed' effect, dealing damage over time.",
+    "hp": 1250,
+    "atk": 160,
+    "def": 110,
+    "spd": 110,
     "lore": "The Titan of mortality, father of Atlas, Prometheus, and Epimetheus."
   },
   {
@@ -1991,12 +2156,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 100,
-    "atk": 15,
-    "def": 9,
-    "spd": 15,
-    "passive_ability_name": "Gorgon Slayer",
-    "passive_ability_desc": "Deals bonus damage to 'Gorgon' and 'Monster' type enemies.",
+    "hp": 1000,
+    "atk": 150,
+    "def": 90,
+    "spd": 150,
     "lore": "The legendary founder of Mycenae and slayer of Medusa."
   },
   {
@@ -2007,12 +2170,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 95,
-    "atk": 14,
-    "def": 8,
-    "spd": 16,
-    "passive_ability_name": "Pegasus Rider",
-    "passive_ability_desc": "Has very high speed and dodge chance if a 'Pegasus' is on the same team.",
+    "hp": 950,
+    "atk": 140,
+    "def": 80,
+    "spd": 160,
     "lore": "The hero of Corinth who tamed the winged horse Pegasus and slew the Chimera."
   },
   {
@@ -2023,12 +2184,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Physical",
-    "hp": 90,
-    "atk": 13,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "Master Inventor",
-    "passive_ability_desc": "Increases the effectiveness of all equipped Heirlooms on the team by 3%.",
+    "hp": 900,
+    "atk": 130,
+    "def": 100,
+    "spd": 120,
     "lore": "A skillful architect and craftsman, seen as a father of invention."
   },
   {
@@ -2039,12 +2198,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 85,
-    "atk": 11,
-    "def": 8,
-    "spd": 9,
-    "passive_ability_name": "The Forceful",
-    "passive_ability_desc": "Basic attacks have a chance to knock back the enemy, delaying their turn.",
+    "hp": 850,
+    "atk": 110,
+    "def": 80,
+    "spd": 90,
     "lore": "One of the three Gorgon sisters, known for her immense strength."
   },
   {
@@ -2055,12 +2212,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 80,
-    "atk": 12,
-    "def": 7,
-    "spd": 10,
-    "passive_ability_name": "The Far Springer",
-    "passive_ability_desc": "Has increased speed and dodge chance against ranged attacks.",
+    "hp": 800,
+    "atk": 120,
+    "def": 70,
+    "spd": 100,
     "lore": "One of the three Gorgon sisters, known for her bellowing cries."
   },
   {
@@ -2071,12 +2226,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 100,
-    "atk": 8,
-    "def": 12,
-    "spd": 4,
-    "passive_ability_name": "Clockwork Soldier",
-    "passive_ability_desc": "Immune to all mind-affecting status effects like 'Charm' or 'Confuse'.",
+    "hp": 1000,
+    "atk": 80,
+    "def": 120,
+    "spd": 40,
     "lore": "Magical, self-operating machines crafted by Hephaestus."
   },
   {
@@ -2087,12 +2240,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Fire",
-    "hp": 110,
-    "atk": 9,
-    "def": 11,
-    "spd": 5,
-    "passive_ability_name": "Sleepless Guardian",
-    "passive_ability_desc": "Cannot be put to sleep.",
+    "hp": 1100,
+    "atk": 90,
+    "def": 110,
+    "spd": 50,
     "lore": "The ever-watchful dragon that guarded the Golden Fleece."
   },
   {
@@ -2103,13 +2254,23 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Dark",
-    "hp": 110,
-    "atk": 18,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Mother of Monsters",
-    "passive_ability_desc": "All 'C' tier allies on the team gain a significant boost to their HP.",
-    "lore": "A giantess, mate of Loki, and mother to Fenrir, Jörmungandr, and Hel."
+    "hp": 1100,
+    "atk": 180,
+    "def": 90,
+    "spd": 130,
+    "lore": "A giantess, mate of Loki, and mother to Fenrir, Jörmungandr, and Hel.",
+    "passive": {
+      "name": "Mother of Monsters",
+      "type": "TeamBuff",
+      "params": {
+        "condition": {
+          "rarity_is": "C"
+        },
+        "stat": "HP",
+        "valuePct": 0.3
+      },
+      "desc": "All C-tier allies gain +30% HP."
+    }
   },
   {
     "id": 244,
@@ -2119,12 +2280,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 110,
-    "atk": 15,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "The Blind God",
-    "passive_ability_desc": "Attacks ignore enemy dodge chance, but has a slightly lower base accuracy.",
+    "hp": 1100,
+    "atk": 150,
+    "def": 100,
+    "spd": 120,
     "lore": "The blind son of Odin, tricked by Loki into killing his brother Baldur."
   },
   {
@@ -2135,12 +2294,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 100,
-    "atk": 16,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "God of Vengeance",
-    "passive_ability_desc": "Deals bonus damage to the character that last defeated an ally.",
+    "hp": 1000,
+    "atk": 160,
+    "def": 80,
+    "spd": 150,
     "lore": "A son of Odin, conceived for the sole purpose of avenging Baldur's death."
   },
   {
@@ -2151,12 +2308,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Lightning",
-    "hp": 115,
-    "atk": 16,
-    "def": 11,
-    "spd": 11,
-    "passive_ability_name": "Spirit of Wrath",
-    "passive_ability_desc": "Gains an attack boost when fighting alongside his brother Magni.",
+    "hp": 1150,
+    "atk": 160,
+    "def": 110,
+    "spd": 110,
     "lore": "A son of Thor, whose name means 'Wrath' or 'Courage'."
   },
   {
@@ -2167,12 +2322,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Lightning",
-    "hp": 125,
-    "atk": 14,
-    "def": 13,
-    "spd": 9,
-    "passive_ability_name": "Spirit of Strength",
-    "passive_ability_desc": "Gains a defense boost when fighting alongside his brother Móði.",
+    "hp": 1250,
+    "atk": 140,
+    "def": 130,
+    "spd": 90,
     "lore": "A son of Thor, whose name means 'Mighty' or 'Strong'."
   },
   {
@@ -2183,12 +2336,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Light",
-    "hp": 85,
-    "atk": 10,
-    "def": 8,
-    "spd": 8,
-    "passive_ability_name": "Golden Bristles",
-    "passive_ability_desc": "Has a chance to 'Dazzle' enemies with its basic attacks, reducing their accuracy.",
+    "hp": 850,
+    "atk": 100,
+    "def": 80,
+    "spd": 80,
     "lore": "A boar with golden bristles, created by the dwarves Brokkr and Eitri."
   },
   {
@@ -2199,12 +2350,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 75,
-    "atk": 9,
-    "def": 6,
-    "spd": 14,
-    "passive_ability_name": "Corpse Swallower",
-    "passive_ability_desc": "Creates a gust of wind when defeated, slightly lowering the speed of all enemies.",
+    "hp": 750,
+    "atk": 90,
+    "def": 60,
+    "spd": 140,
     "lore": "A giant who takes the form of an eagle and sits at the end of the world."
   },
   {
@@ -2215,12 +2364,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 120,
-    "atk": 5,
-    "def": 12,
-    "spd": 4,
-    "passive_ability_name": "Primeval Cow",
-    "passive_ability_desc": "Provides a small amount of healing to all allies at the start of each turn.",
+    "hp": 1200,
+    "atk": 50,
+    "def": 120,
+    "spd": 40,
     "lore": "A primeval cow from whom the giant Ymir fed."
   },
   {
@@ -2231,12 +2378,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 105,
-    "atk": 15,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "Odin's Wolves",
-    "passive_ability_desc": "Attack as a pair, having a chance to strike twice.",
+    "hp": 1050,
+    "atk": 150,
+    "def": 90,
+    "spd": 140,
     "lore": "Odin's two wolves, who accompany him in battle."
   },
   {
@@ -2247,12 +2392,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 110,
-    "atk": 16,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Moon Chaser",
-    "passive_ability_desc": "Deals bonus damage to 'Light' and 'Moon' affiliated characters.",
+    "hp": 1100,
+    "atk": 160,
+    "def": 90,
+    "spd": 130,
     "lore": "The wolf that chases Máni (the moon) across the night sky."
   },
   {
@@ -2263,12 +2406,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 110,
-    "atk": 16,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Sun Chaser",
-    "passive_ability_desc": "Deals bonus damage to 'Light' and 'Sun' affiliated characters.",
+    "hp": 1100,
+    "atk": 160,
+    "def": 90,
+    "spd": 130,
     "lore": "The wolf that chases Sól (the sun) across the sky."
   },
   {
@@ -2279,12 +2420,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Light",
-    "hp": 95,
-    "atk": 14,
-    "def": 8,
-    "spd": 14,
-    "passive_ability_name": "Goddess of Dawn",
-    "passive_ability_desc": "At the start of battle, provides a temporary speed boost to all allies.",
+    "hp": 950,
+    "atk": 140,
+    "def": 80,
+    "spd": 140,
     "lore": "The Titaness goddess of the dawn, who rose each morning from her home at the edge of Oceanus."
   },
   {
@@ -2294,13 +2433,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 100,
-    "atk": 15,
-    "def": 9,
-    "spd": 12,
-    "passive_ability_name": "Goddess of the Moon",
-    "passive_ability_desc": "Increases the power of 'Dark' and 'Shadow' abilities at night.",
+    "element": "Dark",
+    "hp": 1000,
+    "atk": 150,
+    "def": 90,
+    "spd": 120,
     "lore": "The Titaness goddess of the moon."
   },
   {
@@ -2311,12 +2448,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Fire",
-    "hp": 105,
-    "atk": 16,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "God of the Sun",
-    "passive_ability_desc": "Increases the power of 'Fire' and 'Light' abilities during the day.",
+    "hp": 1050,
+    "atk": 160,
+    "def": 90,
+    "spd": 130,
     "lore": "The Titan god of the sun, who drove his fiery chariot across the sky."
   },
   {
@@ -2327,12 +2462,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Light",
-    "hp": 70,
-    "atk": 8,
-    "def": 6,
-    "spd": 17,
-    "passive_ability_name": "Goddess of the Rainbow",
-    "passive_ability_desc": "Has a chance to remove a random debuff from an ally at the start of her turn.",
+    "hp": 700,
+    "atk": 80,
+    "def": 60,
+    "spd": 170,
     "lore": "The personification of the rainbow and a messenger of the gods."
   },
   {
@@ -2343,12 +2476,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Ice",
-    "hp": 80,
-    "atk": 10,
-    "def": 7,
-    "spd": 11,
-    "passive_ability_name": "North Wind",
-    "passive_ability_desc": "Has a chance to 'Chill' enemies, slightly reducing their speed.",
+    "hp": 800,
+    "atk": 100,
+    "def": 70,
+    "spd": 110,
     "lore": "The Greek god of the cold north wind and the bringer of winter."
   },
   {
@@ -2359,12 +2490,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Wind",
-    "hp": 75,
-    "atk": 9,
-    "def": 6,
-    "spd": 13,
-    "passive_ability_name": "West Wind",
-    "passive_ability_desc": "Increases the speed of all allies on the team by a small amount.",
+    "hp": 750,
+    "atk": 90,
+    "def": 60,
+    "spd": 130,
     "lore": "The Greek god of the west wind, the gentlest of the winds."
   },
   {
@@ -2375,12 +2504,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Fire",
-    "hp": 80,
-    "atk": 11,
-    "def": 6,
-    "spd": 10,
-    "passive_ability_name": "South Wind",
-    "passive_ability_desc": "Has a chance to apply a small 'Burn' effect to enemies.",
+    "hp": 800,
+    "atk": 110,
+    "def": 60,
+    "spd": 100,
     "lore": "The Greek god of the south wind, associated with the storms of late summer."
   },
   {
@@ -2391,12 +2518,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Physical",
-    "hp": 85,
-    "atk": 10,
-    "def": 8,
-    "spd": 9,
-    "passive_ability_name": "East Wind",
-    "passive_ability_desc": "Basic attacks have a chance to push back an enemy's turn.",
+    "hp": 850,
+    "atk": 100,
+    "def": 80,
+    "spd": 90,
     "lore": "The Greek deity representing the unlucky east wind."
   },
   {
@@ -2407,12 +2532,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Water",
-    "hp": 100,
-    "atk": 7,
-    "def": 11,
-    "spd": 6,
-    "passive_ability_name": "River of Oaths",
-    "passive_ability_desc": "Allies cannot have their stats lowered by enemy abilities.",
+    "hp": 1000,
+    "atk": 70,
+    "def": 110,
+    "spd": 60,
     "lore": "A deity and a river that forms the boundary between Earth and the Underworld."
   },
   {
@@ -2423,12 +2546,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Water",
-    "hp": 70,
-    "atk": 9,
-    "def": 7,
-    "spd": 12,
-    "passive_ability_name": "River of Forgetfulness",
-    "passive_ability_desc": "Attacks have a chance to make an enemy 'Forget' their ability for one turn.",
+    "hp": 700,
+    "atk": 90,
+    "def": 70,
+    "spd": 120,
     "lore": "One of the five rivers of the underworld of Hades, associated with forgetfulness."
   },
   {
@@ -2438,13 +2559,11 @@
     "pantheon": "Norse",
     "rarity": "B",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 100,
-    "atk": 14,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "Goddess of Night",
-    "passive_ability_desc": "Increases the power of all 'Shadow' and 'Dark' allies.",
+    "element": "Dark",
+    "hp": 1000,
+    "atk": 140,
+    "def": 100,
+    "spd": 120,
     "lore": "The personification of night in Norse mythology."
   },
   {
@@ -2455,12 +2574,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Light",
-    "hp": 100,
-    "atk": 14,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "God of Day",
-    "passive_ability_desc": "Increases the power of all 'Light' and 'Sun' allies.",
+    "hp": 1000,
+    "atk": 140,
+    "def": 100,
+    "spd": 120,
     "lore": "The personification of day in Norse mythology."
   },
   {
@@ -2471,13 +2588,25 @@
     "rarity": "S",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 150,
-    "atk": 20,
-    "def": 15,
-    "spd": 11,
-    "passive_ability_name": "Twelve Labors",
-    "passive_ability_desc": "Upon defeating an enemy, gains a small, permanent stacking bonus to Attack for the rest of the battle.",
-    "lore": "The most famous of Greek heroes, a divine hero of incredible strength, courage, and cunning who completed twelve impossible labors."
+    "hp": 1500,
+    "atk": 200,
+    "def": 150,
+    "spd": 110,
+    "lore": "The most famous of Greek heroes, a divine hero of incredible strength, courage, and cunning who completed twelve impossible labors.",
+    "passive": {
+      "name": "Twelve Labors",
+      "type": "OnEnemyDefeat",
+      "params": {
+        "target": "self",
+        "buff": {
+          "stat": "ATK",
+          "valuePct": 0.15
+        },
+        "stacking": true,
+        "max_stacks": 5
+      },
+      "desc": "Gains a stacking +15% ATK buff whenever any enemy is defeated (max 5 stacks)."
+    }
   },
   {
     "id": 257,
@@ -2487,13 +2616,25 @@
     "rarity": "S",
     "class": "Mage",
     "element": "Nature",
-    "hp": 115,
-    "atk": 18,
-    "def": 11,
-    "spd": 13,
-    "passive_ability_name": "Queen of the Underworld",
-    "passive_ability_desc": "When an ally is defeated, a 'Dread Bloom' appears in their place, dealing damage to enemies that attack it.",
-    "lore": "Daughter of Zeus and Demeter, she is the Queen of the Underworld and the goddess of spring's bounty."
+    "hp": 1150,
+    "atk": 180,
+    "def": 110,
+    "spd": 130,
+    "lore": "Daughter of Zeus and Demeter, she is the Queen of the Underworld and the goddess of spring's bounty.",
+    "passive": {
+      "name": "Queen of the Underworld",
+      "type": "OnAllyDefeat",
+      "params": {
+        "effect": "CheatDeath",
+        "healToHpPct": 0.01,
+        "applyBuff": {
+          "type": "invulnerable",
+          "durationTurns": 1
+        },
+        "once_per_battle": true
+      },
+      "desc": "The first time an ally would be defeated, they survive with 1 HP and become Invulnerable for 1 turn."
+    }
   },
   {
     "id": 258,
@@ -2503,13 +2644,23 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Fire",
-    "hp": 145,
-    "atk": 10,
-    "def": 19,
-    "spd": 7,
-    "passive_ability_name": "Sacred Flame",
-    "passive_ability_desc": "Allies are immune to 'Burn' and 'Freeze' status effects. The entire team gains a small defensive boost.",
-    "lore": "Goddess of the hearth, home, family, and the state. The firstborn of the Titans Cronus and Rhea, she is a gentle and peace-loving deity."
+    "hp": 1450,
+    "atk": 100,
+    "def": 190,
+    "spd": 70,
+    "lore": "Goddess of the hearth, home, family, and the state. The firstborn of the Titans Cronus and Rhea, she is a gentle and peace-loving deity.",
+    "passive": {
+      "name": "Sacred Flame",
+      "type": "Resistance",
+      "params": {
+        "resist": [
+          "Burn",
+          "Freeze"
+        ],
+        "chancePct": 1.0
+      },
+      "desc": "All allies are immune to Burn and Freeze status effects."
+    }
   },
   {
     "id": 259,
@@ -2518,14 +2669,22 @@
     "pantheon": "Greco-Roman",
     "rarity": "A",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 110,
-    "atk": 17,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "Sorceress of Aeaea",
-    "passive_ability_desc": "Has a 10% chance to turn an enemy into a non-threatening 'Pig' for 1 turn when using an ability.",
-    "lore": "A powerful enchantress and minor goddess of magic, renowned for her vast knowledge of potions and herbs and her ability to transform foes into animals."
+    "element": "Dark",
+    "hp": 1100,
+    "atk": 170,
+    "def": 90,
+    "spd": 140,
+    "lore": "A powerful enchantress and minor goddess of magic, renowned for her vast knowledge of potions and herbs and her ability to transform foes into animals.",
+    "passive": {
+      "name": "Sorceress of Aeaea",
+      "type": "OnHitEffect",
+      "params": {
+        "debuff": "stun",
+        "chancePct": 0.1,
+        "durationTurns": 1
+      },
+      "desc": "Abilities have a 10% chance to Stun the target for 1 turn."
+    }
   },
   {
     "id": 260,
@@ -2535,12 +2694,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 115,
-    "atk": 16,
-    "def": 10,
-    "spd": 14,
-    "passive_ability_name": "Queen of the Amazons",
-    "passive_ability_desc": "The first attack against her by a male character has a 50% chance to miss.",
+    "hp": 1150,
+    "atk": 160,
+    "def": 100,
+    "spd": 140,
     "lore": "A queen of the Amazons, she possessed a magical girdle that was the object of one of Heracles' labors. A fierce and noble warrior."
   },
   {
@@ -2551,12 +2708,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Nature",
-    "hp": 85,
-    "atk": 9,
-    "def": 7,
-    "spd": 12,
-    "passive_ability_name": "Unearthly Beauty",
-    "passive_ability_desc": "At the start of battle, has a chance to apply a 'Charm' debuff to a random enemy for 1 turn.",
+    "hp": 850,
+    "atk": 90,
+    "def": 70,
+    "spd": 120,
     "lore": "A mortal youth of such incredible beauty that he was fought over by the goddesses Aphrodite and Persephone."
   },
   {
@@ -2567,13 +2722,22 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 135,
-    "atk": 18,
-    "def": 12,
-    "spd": 11,
-    "passive_ability_name": "Dragon Slayer",
-    "passive_ability_desc": "Deals 25% increased damage to 'Dragon' and 'Monster' type enemies.",
-    "lore": "A legendary hero of Norse mythology who slew the dragon Fafnir with his sword Gram, claiming its cursed treasure."
+    "hp": 1350,
+    "atk": 180,
+    "def": 120,
+    "spd": 110,
+    "lore": "A legendary hero of Norse mythology who slew the dragon Fafnir with his sword Gram, claiming its cursed treasure.",
+    "passive": {
+      "name": "Dragon Slayer",
+      "type": "DamageModifier",
+      "params": {
+        "condition": {
+          "target_class_is": "Guardian"
+        },
+        "valuePct": 0.25
+      },
+      "desc": "Deals 25% bonus damage to Guardian class enemies."
+    }
   },
   {
     "id": 263,
@@ -2583,12 +2747,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 110,
-    "atk": 15,
-    "def": 9,
-    "spd": 15,
-    "passive_ability_name": "Shieldmaiden's Oath",
-    "passive_ability_desc": "If 'Sigurd' is on the team, both characters gain a significant critical hit chance bonus.",
+    "hp": 1100,
+    "atk": 150,
+    "def": 90,
+    "spd": 150,
     "lore": "A powerful shieldmaiden and valkyrie who is a central figure in the saga of Sigurd, awakened by him from a magical sleep."
   },
   {
@@ -2599,12 +2761,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 90,
-    "atk": 12,
-    "def": 8,
-    "spd": 7,
-    "passive_ability_name": "Hater of Joy",
-    "passive_ability_desc": "Deals bonus damage to enemies that are currently buffed.",
+    "hp": 900,
+    "atk": 120,
+    "def": 80,
+    "spd": 70,
     "lore": "A monstrous creature descended from Cain, who terrorized the hall of the Danish king Hrothgar before being slain by Beowulf."
   },
   {
@@ -2615,13 +2775,26 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 130,
-    "atk": 17,
-    "def": 13,
-    "spd": 10,
-    "passive_ability_name": "Hero of the Geats",
-    "passive_ability_desc": "Gains a large Attack and Defense boost when fighting 'Monster' or 'Dragon' type enemies.",
-    "lore": "A heroic warrior of the Geats who came to the aid of the Danish king, defeating the monster Grendel and his mother."
+    "hp": 1300,
+    "atk": 170,
+    "def": 130,
+    "spd": 100,
+    "lore": "A heroic warrior of the Geats who came to the aid of the Danish king, defeating the monster Grendel and his mother.",
+    "passive": {
+      "name": "Hero of the Geats",
+      "type": "SelfBuff",
+      "params": {
+        "condition": {
+          "enemy_class_present": "Guardian"
+        },
+        "stat": [
+          "ATK",
+          "DEF"
+        ],
+        "valuePct": 0.2
+      },
+      "desc": "Gains +20% ATK and DEF if there is a Guardian class enemy on the field."
+    }
   },
   {
     "id": 266,
@@ -2631,12 +2804,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Light",
-    "hp": 80,
-    "atk": 10,
-    "def": 7,
-    "spd": 11,
-    "passive_ability_name": "Father of the Winds",
-    "passive_ability_desc": "Increases the power of 'Wind' element allies on the team by 5%.",
+    "hp": 800,
+    "atk": 100,
+    "def": 70,
+    "spd": 110,
     "lore": "Titan god of the stars and planets, and the art of astrology. Father of the four Anemoi (the Winds)."
   },
   {
@@ -2647,12 +2818,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 85,
-    "atk": 11,
-    "def": 8,
-    "spd": 9,
-    "passive_ability_name": "The Spear-Brandisher",
-    "passive_ability_desc": "Increases critical hit chance when fighting alongside another 'Titan' ally.",
+    "hp": 850,
+    "atk": 110,
+    "def": 80,
+    "spd": 90,
     "lore": "A Titan god of warcraft, a son of Crius and Eurybia, and a companion of the goddess Athena."
   },
   {
@@ -2663,12 +2832,10 @@
     "rarity": "C",
     "class": "Warrior",
     "element": "Fire",
-    "hp": 85,
-    "atk": 11,
-    "def": 8,
-    "spd": 9,
-    "passive_ability_name": "The Destroyer",
-    "passive_ability_desc": "Deals slightly increased damage to structures and fortifications in certain battle modes.",
+    "hp": 850,
+    "atk": 110,
+    "def": 80,
+    "spd": 90,
     "lore": "Titan god of destruction. He was the father of Hecate, goddess of magic."
   },
   {
@@ -2678,13 +2845,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "B",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 95,
-    "atk": 14,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "Bringer of Nightmares",
-    "passive_ability_desc": "Has a chance to inflict 'Fear' with each attack, causing enemies to sometimes skip their turn.",
+    "element": "Dark",
+    "hp": 950,
+    "atk": 140,
+    "def": 80,
+    "spd": 150,
     "lore": "A chthonic nymph and goddess, daughter of Persephone, who presided over nightmares and madness."
   },
   {
@@ -2695,13 +2860,26 @@
     "rarity": "A",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 110,
-    "atk": 17,
-    "def": 10,
-    "spd": 14,
-    "passive_ability_name": "Orphic Rebirth",
-    "passive_ability_desc": "When this character is defeated for the first time, they return with 25% HP and a temporary speed boost.",
-    "lore": "A god of the Orphic mysteries, often identified with Dionysus, representing the cycle of life, death, and rebirth."
+    "hp": 1100,
+    "atk": 170,
+    "def": 100,
+    "spd": 140,
+    "lore": "A god of the Orphic mysteries, often identified with Dionysus, representing the cycle of life, death, and rebirth.",
+    "passive": {
+      "name": "Orphic Rebirth",
+      "type": "SelfRevive",
+      "params": {
+        "reviveHpPct": 0.25,
+        "buffs": [
+          {
+            "type": "speed_up",
+            "valuePct": 0.2,
+            "durationTurns": 2
+          }
+        ]
+      },
+      "desc": "The first time this character is defeated, they revive with 25% HP and a temporary speed boost."
+    }
   },
   {
     "id": 271,
@@ -2711,12 +2889,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 90,
-    "atk": 13,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "Personified Fear",
-    "passive_ability_desc": "When an enemy is afflicted with a 'Fear' or 'Stun' debuff, this character's attack is increased.",
+    "hp": 900,
+    "atk": 130,
+    "def": 80,
+    "spd": 150,
     "lore": "The personification of fear and panic, a son of Ares and Aphrodite, who accompanied his father into battle."
   },
   {
@@ -2727,12 +2903,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Dark",
-    "hp": 100,
-    "atk": 15,
-    "def": 9,
-    "spd": 14,
-    "passive_ability_name": "Personified Terror",
-    "passive_ability_desc": "Attacks against enemies with low health have a higher chance to be a critical hit.",
+    "hp": 1000,
+    "atk": 150,
+    "def": 90,
+    "spd": 140,
     "lore": "The personification of terror and dread. He is the twin brother of Phobos and also a son of Ares."
   },
   {
@@ -2743,12 +2917,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Light",
-    "hp": 90,
-    "atk": 11,
-    "def": 10,
-    "spd": 13,
-    "passive_ability_name": "Goddess of Harmony",
-    "passive_ability_desc": "Reduces the chance of the 'Berserk' or 'Confuse' status effects on the entire team.",
+    "hp": 900,
+    "atk": 110,
+    "def": 100,
+    "spd": 130,
     "lore": "The immortal goddess of harmony and concord. Her necklace brought misfortune to all who possessed it."
   },
   {
@@ -2759,12 +2931,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Wind",
-    "hp": 70,
-    "atk": 8,
-    "def": 7,
-    "spd": 16,
-    "passive_ability_name": "Cupbearer to the Gods",
-    "passive_ability_desc": "Has a chance to grant a random buff to an ally at the start of his turn.",
+    "hp": 700,
+    "atk": 80,
+    "def": 70,
+    "spd": 160,
     "lore": "A divine hero from Troy, who was abducted by Zeus to serve as his cupbearer in Olympus."
   },
   {
@@ -2774,13 +2944,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "C",
     "class": "Mage",
-    "element": "Shadow",
-    "hp": 65,
-    "atk": 11,
-    "def": 5,
-    "spd": 12,
-    "passive_ability_name": "Cursed Prophet",
-    "passive_ability_desc": "Has a chance to reveal an enemy's next move, but allies may not always be able to act on the information.",
+    "element": "Dark",
+    "hp": 650,
+    "atk": 110,
+    "def": 50,
+    "spd": 120,
     "lore": "A princess of Troy cursed by Apollo to utter true prophecies that were never believed."
   },
   {
@@ -2791,12 +2959,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 110,
-    "atk": 16,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Amazon War Queen",
-    "passive_ability_desc": "Deals increased damage when fighting against 'Hero' class characters like Achilles.",
+    "hp": 1100,
+    "atk": 160,
+    "def": 90,
+    "spd": 130,
     "lore": "An Amazonian queen who fought in the Trojan War on the side of the Trojans."
   },
   {
@@ -2807,12 +2973,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 115,
-    "atk": 15,
-    "def": 11,
-    "spd": 12,
-    "passive_ability_name": "Achaean Hero",
-    "passive_ability_desc": "One of the most respected heroes of the Trojan War, he was even able to wound the gods Ares and Aphrodite.",
+    "hp": 1150,
+    "atk": 150,
+    "def": 110,
+    "spd": 120,
     "lore": "One of the most respected heroes of the Trojan War, he was even able to wound the gods Ares and Aphrodite."
   },
   {
@@ -2823,13 +2987,22 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Physical",
-    "hp": 160,
-    "atk": 13,
-    "def": 18,
-    "spd": 6,
-    "passive_ability_name": "Tower of the Achaeans",
-    "passive_ability_desc": "Has a high chance to 'Taunt' enemies, drawing single-target attacks to himself.",
-    "lore": "A Greek hero, son of Telamon, renowned for his immense strength and courage, second only to Achilles."
+    "hp": 1600,
+    "atk": 130,
+    "def": 180,
+    "spd": 60,
+    "lore": "A Greek hero, son of Telamon, renowned for his immense strength and courage, second only to Achilles.",
+    "passive": {
+      "name": "Tower of the Achaeans",
+      "type": "OnTurnStart",
+      "params": {
+        "effect": "ApplyBuff",
+        "buff": "taunt",
+        "durationTurns": 1,
+        "target": "self"
+      },
+      "desc": "Applies Taunt to himself at the start of his turn."
+    }
   },
   {
     "id": 279,
@@ -2839,13 +3012,23 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 130,
-    "atk": 16,
-    "def": 14,
-    "spd": 10,
-    "passive_ability_name": "Founder of Rome",
-    "passive_ability_desc": "Boosts the stats of all 'Greco-Roman' allies if Heracles is not present on the team.",
-    "lore": "A Trojan hero who, after the fall of Troy, led his followers to Italy and became the mythical founder of Rome."
+    "hp": 1300,
+    "atk": 160,
+    "def": 140,
+    "spd": 100,
+    "lore": "A Trojan hero who, after the fall of Troy, led his followers to Italy and became the mythical founder of Rome.",
+    "passive": {
+      "name": "Founder of Rome",
+      "type": "TeamBuff",
+      "params": {
+        "condition": {
+          "pantheon": "Greco-Roman"
+        },
+        "stat": "all",
+        "valuePct": 0.05
+      },
+      "desc": "All Greco-Roman allies gain +5% to all stats."
+    }
   },
   {
     "id": 280,
@@ -2855,12 +3038,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 100,
-    "atk": 15,
-    "def": 8,
-    "spd": 16,
-    "passive_ability_name": "Volscian Warrior-Maiden",
-    "passive_ability_desc": "Has an exceptionally high dodge chance but is vulnerable to 'Thrown Weapon' type abilities.",
+    "hp": 1000,
+    "atk": 150,
+    "def": 80,
+    "spd": 160,
     "lore": "A swift and powerful warrior-maiden from Roman mythology who fought against Aeneas in Italy."
   },
   {
@@ -2871,13 +3052,34 @@
     "rarity": "A",
     "class": "Guardian",
     "element": "Light",
-    "hp": 130,
-    "atk": 14,
-    "def": 16,
-    "spd": 9,
-    "passive_ability_name": "Two-Faced God",
-    "passive_ability_desc": "Provides a defensive boost to the team for the first turn, and an offensive boost on the second turn.",
-    "lore": "Roman god of beginnings, gates, transitions, time, and endings. He is usually depicted with two faces."
+    "hp": 1300,
+    "atk": 140,
+    "def": 160,
+    "spd": 90,
+    "lore": "Roman god of beginnings, gates, transitions, time, and endings. He is usually depicted with two faces.",
+    "passive": {
+      "name": "Two-Faced God",
+      "type": "ApplyEffectOnBattleStart",
+      "params": {
+        "target": "allies",
+        "buff": {
+          "type": "defense_up",
+          "valuePct": 0.2,
+          "durationTurns": 1
+        },
+        "secondary_effect": {
+          "trigger": "OnTurn",
+          "turn": 2,
+          "target": "allies",
+          "buff": {
+            "type": "attack_up",
+            "valuePct": 0.2,
+            "durationTurns": 1
+          }
+        }
+      },
+      "desc": "Allies gain +20% DEF on turn 1, and +20% ATK on turn 2."
+    }
   },
   {
     "id": 282,
@@ -2887,12 +3089,10 @@
     "rarity": "B",
     "class": "Guardian",
     "element": "Fire",
-    "hp": 125,
-    "atk": 9,
-    "def": 17,
-    "spd": 8,
-    "passive_ability_name": "Eternal Flame",
-    "passive_ability_desc": "The team is immune to all 'Dark' and 'Shadow' status effects as long as this character is above 50% HP.",
+    "hp": 1250,
+    "atk": 90,
+    "def": 170,
+    "spd": 80,
     "lore": "Roman goddess of the hearth, home, and family, equivalent to the Greek Hestia. Her sacred fire was kept burning in her temple."
   },
   {
@@ -2903,12 +3103,10 @@
     "rarity": "C",
     "class": "Guardian",
     "element": "Nature",
-    "hp": 95,
-    "atk": 7,
-    "def": 10,
-    "spd": 7,
-    "passive_ability_name": "Guardian Spirits",
-    "passive_ability_desc": "Provides a small, random stat boost to one ally at the start of battle.",
+    "hp": 950,
+    "atk": 70,
+    "def": 100,
+    "spd": 70,
     "lore": "Guardian deities in ancient Roman religion. Their function was to protect the household and family."
   },
   {
@@ -2918,13 +3116,11 @@
     "pantheon": "Greco-Roman",
     "rarity": "C",
     "class": "Rogue",
-    "element": "Shadow",
-    "hp": 70,
-    "atk": 10,
-    "def": 5,
-    "spd": 12,
-    "passive_ability_name": "Vengeful Dead",
-    "passive_ability_desc": "Has a small chance to apply a 'Curse' debuff, slightly reducing enemy stats with each attack.",
+    "element": "Dark",
+    "hp": 700,
+    "atk": 100,
+    "def": 50,
+    "spd": 120,
     "lore": "The vengeful and restless dead in Roman mythology, spirits of those who were not given a proper burial."
   },
   {
@@ -2935,13 +3131,20 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 120,
-    "atk": 19,
-    "def": 10,
-    "spd": 11,
-    "passive_ability_name": "God of Strength",
-    "passive_ability_desc": "Basic attacks cannot be dodged. Deals bonus damage to characters with a 'Divine' or 'God' tag.",
-    "lore": "The divine personification of strength and power. A son of Pallas and Styx."
+    "hp": 1200,
+    "atk": 190,
+    "def": 100,
+    "spd": 110,
+    "lore": "The divine personification of strength and power. A son of Pallas and Styx.",
+    "passive": {
+      "name": "God of Strength",
+      "type": "SelfBuff",
+      "params": {
+        "stat": "accuracy",
+        "valuePct": 1.0
+      },
+      "desc": "This character's attacks cannot miss."
+    }
   },
   {
     "id": 286,
@@ -2951,12 +3154,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 110,
-    "atk": 16,
-    "def": 9,
-    "spd": 13,
-    "passive_ability_name": "Goddess of Force",
-    "passive_ability_desc": "Attacks have a higher chance to inflict a 'Stun' against enemies who are already debuffed.",
+    "hp": 1100,
+    "atk": 160,
+    "def": 90,
+    "spd": 130,
     "lore": "The goddess of force and raw energy, the sister of Kratos."
   },
   {
@@ -2967,12 +3168,10 @@
     "rarity": "B",
     "class": "Rogue",
     "element": "Physical",
-    "hp": 100,
-    "atk": 15,
-    "def": 8,
-    "spd": 15,
-    "passive_ability_name": "God of Zeal",
-    "passive_ability_desc": "Gains a cumulative speed boost for every critical hit landed during battle.",
+    "hp": 1000,
+    "atk": 150,
+    "def": 80,
+    "spd": 150,
     "lore": "The god of dedication, emulation, eager rivalry, envy, jealousy, and zeal."
   },
   {
@@ -2982,14 +3181,26 @@
     "pantheon": "Norse",
     "rarity": "S",
     "class": "Guardian",
-    "element": "Shadow",
-    "hp": 150,
-    "atk": 10,
-    "def": 18,
-    "spd": 5,
-    "passive_ability_name": "Personified Old Age",
-    "passive_ability_desc": "Any enemy that attacks this character has their Speed and Attack permanently lowered for the duration of the battle.",
-    "lore": "The personification of Old Age in Norse mythology, who, in one tale, managed to defeat Thor in a wrestling match."
+    "element": "Dark",
+    "hp": 1500,
+    "atk": 100,
+    "def": 180,
+    "spd": 50,
+    "lore": "The personification of Old Age in Norse mythology, who, in one tale, managed to defeat Thor in a wrestling match.",
+    "passive": {
+      "name": "Personified Old Age",
+      "type": "OnBeingAttacked",
+      "params": {
+        "debuff": [
+          "attack_down",
+          "speed_down"
+        ],
+        "valuePct": 0.05,
+        "durationTurns": 99,
+        "stacking": true
+      },
+      "desc": "Any enemy that attacks this character has its ATK and SPD permanently lowered by 5%. This effect can stack."
+    }
   },
   {
     "id": 292,
@@ -2999,12 +3210,10 @@
     "rarity": "C",
     "class": "Rogue",
     "element": "Dark",
-    "hp": 75,
-    "atk": 9,
-    "def": 6,
-    "spd": 14,
-    "passive_ability_name": "Tragic Son",
-    "passive_ability_desc": "If 'Loki' is on the enemy team, this character will focus all attacks on him.",
+    "hp": 750,
+    "atk": 90,
+    "def": 60,
+    "spd": 140,
     "lore": "A son of Loki. After his transformation into a wolf, his brother Váli killed him."
   },
   {
@@ -3015,12 +3224,10 @@
     "rarity": "B",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 120,
-    "atk": 17,
-    "def": 12,
-    "spd": 8,
-    "passive_ability_name": "The Brawler",
-    "passive_ability_desc": "Wields a massive whetstone as a weapon. Attacks have a high chance to ignore enemy defense.",
+    "hp": 1200,
+    "atk": 170,
+    "def": 120,
+    "spd": 80,
     "lore": "A jötunn (giant) from Jötunheimr, famous for his duel with Thor. He had a head and heart of stone."
   },
   {
@@ -3031,12 +3238,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Nature",
-    "hp": 70,
-    "atk": 10,
-    "def": 7,
-    "spd": 11,
-    "passive_ability_name": "Helpful Giantess",
-    "passive_ability_desc": "Provides a random buff to 'Thor' if he is on the same team.",
+    "hp": 700,
+    "atk": 100,
+    "def": 70,
+    "spd": 110,
     "lore": "A female jötunn who assisted Thor by providing him with magical items to defeat the giant Geirröðr."
   },
   {
@@ -3047,12 +3252,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Nature",
-    "hp": 100,
-    "atk": 12,
-    "def": 11,
-    "spd": 13,
-    "passive_ability_name": "The Giver",
-    "passive_ability_desc": "Increases the amount of loot and gold gained from expeditions by 5%.",
+    "hp": 1000,
+    "atk": 120,
+    "def": 110,
+    "spd": 130,
     "lore": "A goddess associated with ploughing, prosperity, and virginity. Said to have plowed the land that became the Danish island of Zealand."
   },
   {
@@ -3063,12 +3266,10 @@
     "rarity": "B",
     "class": "Mage",
     "element": "Water",
-    "hp": 95,
-    "atk": 13,
-    "def": 10,
-    "spd": 12,
-    "passive_ability_name": "Goddess of History",
-    "passive_ability_desc": "Grants a small chance for an ally to use their ability twice in one turn.",
+    "hp": 950,
+    "atk": 130,
+    "def": 100,
+    "spd": 120,
     "lore": "A Norse goddess described as a seeress, possibly another name for Frigg, who dwelt by the stream of time."
   },
   {
@@ -3079,13 +3280,20 @@
     "rarity": "A",
     "class": "Mage",
     "element": "Light",
-    "hp": 110,
-    "atk": 12,
-    "def": 15,
-    "spd": 13,
-    "passive_ability_name": "Merciful Healer",
-    "passive_ability_desc": "All healing abilities used by the team are 20% more effective. Can revive a fallen ally once per battle.",
-    "lore": "A goddess and valkyrie associated with medical skill and healing. Considered the best of all physicians."
+    "hp": 1100,
+    "atk": 120,
+    "def": 150,
+    "spd": 130,
+    "lore": "A goddess and valkyrie associated with medical skill and healing. Considered the best of all physicians.",
+    "passive": {
+      "name": "Merciful Healer",
+      "type": "TeamBuff",
+      "params": {
+        "stat": "healing_effectiveness",
+        "valuePct": 0.2
+      },
+      "desc": "Increases all healing received by all allies by 20%."
+    }
   },
   {
     "id": 298,
@@ -3095,12 +3303,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Light",
-    "hp": 70,
-    "atk": 9,
-    "def": 7,
-    "spd": 12,
-    "passive_ability_name": "Goddess of Permission",
-    "passive_ability_desc": "Has a chance to remove 'Taunt' or 'Disarm' debuffs from allies.",
+    "hp": 700,
+    "atk": 90,
+    "def": 70,
+    "spd": 120,
     "lore": "A gentle goddess who arranges marriages, even when they have been forbidden."
   },
   {
@@ -3111,12 +3317,10 @@
     "rarity": "C",
     "class": "Mage",
     "element": "Nature",
-    "hp": 65,
-    "atk": 10,
-    "def": 6,
-    "spd": 12,
-    "passive_ability_name": "Goddess of Affection",
-    "passive_ability_desc": "Has a chance to apply a 'Charm' effect with her basic attacks, lowering enemy attack.",
+    "hp": 650,
+    "atk": 100,
+    "def": 60,
+    "spd": 120,
     "lore": "A goddess who directs people's minds to love."
   },
   {
@@ -3127,12 +3331,22 @@
     "rarity": "A",
     "class": "Warrior",
     "element": "Physical",
-    "hp": 130,
-    "atk": 17,
-    "def": 13,
-    "spd": 10,
-    "passive_ability_name": "Brother of Odin",
-    "passive_ability_desc": "When fighting alongside Odin, both characters gain a boost to all stats.",
-    "lore": "One of the three brothers, including Odin and Vili, who slew the giant Ymir and created the world."
+    "hp": 1300,
+    "atk": 170,
+    "def": 130,
+    "spd": 100,
+    "lore": "One of the three brothers, including Odin and Vili, who slew the giant Ymir and created the world.",
+    "passive": {
+      "name": "Brother of Odin",
+      "type": "SelfBuff",
+      "params": {
+        "condition": {
+          "ally_name_present": "Odin"
+        },
+        "stat": "all",
+        "valuePct": 0.15
+      },
+      "desc": "Gains +15% to all stats if Odin is on the team."
+    }
   }
 ]

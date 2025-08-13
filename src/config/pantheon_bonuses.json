@@ -1,0 +1,10 @@
+{
+    "Norse": [
+      { "stat": "HP", "valuePct": 0.10 },
+      { "stat": "DEF", "valuePct": 0.05 }
+    ],
+    "Greco-Roman": [
+      { "stat": "ATK", "valuePct": 0.10 },
+      { "stat": "SPD", "valuePct": 0.05 }
+    ]
+}

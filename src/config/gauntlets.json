@@ -1,0 +1,82 @@
+[
+    {
+      "id": "halls_of_ice",
+      "name": "Halls of Ice",
+      "description": "An ancient frost palace where the cold slows the unprepared.",
+      "hazard_ids": ["halls_of_ice"],
+      "enemy_sets": [["frost_giant", "skadi", "ullr"], ["ymir", "heimdall", "baldur"]],
+      "rewards": { "goldMin": 50, "goldMax": 120, "materials": { "ice_crystal": [1,3] } },
+      "difficulty": 2,
+      "image": "https://cdn.example.com/gauntlets/halls_of_ice.jpg"
+    },
+    {
+      "id": "fields_of_valor",
+      "name": "Fields of Valor",
+      "description": "A proving ground where martial prowess is tested and warriors are forged.",
+      "hazard_ids": ["fields_of_valor"],
+      "enemy_sets": [["centaur", "einherjar", "berserker"], ["ares", "tyr", "achilles"]],
+      "rewards": { "goldMin": 30, "goldMax": 80, "materials": { "iron_ingot": [2,5] } },
+      "difficulty": 1,
+      "image": "https://cdn.example.com/gauntlets/fields_of_valor.jpg"
+    },
+    {
+      "id": "hades_gate",
+      "name": "Hades' Gate",
+      "description": "The shadowy entrance to the Underworld, guarded by restless spirits.",
+      "hazard_ids": ["shadows_blind"],
+      "enemy_sets": [["cerberus", "charon", "draugr"], ["hades", "nyx", "thanatos"]],
+      "rewards": { "goldMin": 100, "goldMax": 180, "materials": { "soul_essence": [1,2] } },
+      "difficulty": 3,
+      "image": "https://cdn.example.com/gauntlets/hades_gate.jpg"
+    },
+    {
+      "id": "surtrs_forge",
+      "name": "Surtr's Forge",
+      "description": "A sweltering cavern where the air itself is ablaze and weapons of ruin are made.",
+      "hazard_ids": ["searing_heat"],
+      "enemy_sets": [["fire_giant", "hephaestus", "berserker"], ["surtr", "fire_giant", "fire_giant"]],
+      "rewards": { "goldMin": 150, "goldMax": 250, "materials": { "obsidian_shard": [2,4] } },
+      "difficulty": 4,
+      "image": "https://cdn.example.com/gauntlets/surtrs_forge.jpg"
+    },
+    {
+      "id": "serpents_grotto",
+      "name": "Serpent's Grotto",
+      "description": "A damp, twisting cave where venom drips from the ceiling and scales slither in the dark.",
+      "hazard_ids": ["venomous_haze"],
+      "enemy_sets": [["hydra", "gorgon", "scylla"], ["jormungandr", "nidhogg", "ladon"]],
+      "rewards": { "goldMin": 110, "goldMax": 190, "materials": { "serpent_venom": [2,3] } },
+      "difficulty": 3,
+      "image": "https://cdn.example.com/gauntlets/serpents_grotto.jpg"
+    },
+    {
+      "id": "typhons_lair",
+      "name": "Typhon's Lair",
+      "description": "The volcanic, storm-wracked prison of the Father of All Monsters.",
+      "hazard_ids": ["monstrous_aura", "raging_storm"],
+      "enemy_sets": [["chimera", "hydra", "cerberus"], ["typhon", "echidna", "gorgon"]],
+      "rewards": { "goldMin": 300, "goldMax": 500, "materials": { "primal_scale": [1,1] } },
+      "difficulty": 5,
+      "image": "https://cdn.example.com/gauntlets/typhons_lair.jpg"
+    },
+    {
+      "id": "zeus_summit",
+      "name": "Zeus's Summit",
+      "description": "The peak of Olympus, where storms gather at the whim of the king of the gods.",
+      "hazard_ids": ["raging_storm"],
+      "enemy_sets": [["griffin", "harpy", "ouranos"], ["zeus", "hera", "nike"]],
+      "rewards": { "goldMin": 160, "goldMax": 260, "materials": { "lightning_essence": [1,2] } },
+      "difficulty": 4,
+      "image": "https://cdn.example.com/gauntlets/zeus_summit.jpg"
+    },
+    {
+      "id": "lokis_gambit",
+      "name": "Loki's Gambit",
+      "description": "A shifting hall of mirrors and illusions where nothing is as it seems.",
+      "hazard_ids": ["hall_of_mirrors"],
+      "enemy_sets": [["satyr", "siren", "eris"], ["loki", "hecate", "dionysus"]],
+      "rewards": { "goldMin": 120, "goldMax": 200, "materials": { "chaos_mote": [2,4] } },
+      "difficulty": 3,
+      "image": "https://cdn.example.com/gauntlets/lokis_gambit.jpg"
+    }
+]
