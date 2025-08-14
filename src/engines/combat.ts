@@ -1,4 +1,5 @@
 import { createRequire } from "module";
+import seedrandom from "seedrandom";
 
 const require = createRequire(import.meta.url);
 
@@ -103,6 +104,7 @@ export type BattleOutcome = {
   mvpName: string;
   mvpSide: "ally" | "enemy";
   timeline: TurnEvent[];
+  seed: string;
 };
 
 function getBaseUrl(): string | null {
@@ -149,14 +151,14 @@ export function buildHpBar(current: number, max: number, width = 10): string {
   return `${filledEmoji.repeat(filled)}${emptyEmoji.repeat(empty)} ${Math.max(0, Math.ceil(ratio * 100))}%`;
 }
 
-function pickRandom<T>(arr: T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
+function pickRandom<T>(arr: T[], rng = Math.random): T {
+  return arr[Math.floor(rng() * arr.length)];
 }
 
-function weightedPick<T>(items: T[], getWeight: (item: T) => number): T {
+function weightedPick<T>(items: T[], getWeight: (item: T) => number, rng = Math.random): T {
   const weights = items.map(getWeight);
   const total = weights.reduce((a, b) => a + b, 0);
-  let r = Math.random() * total;
+  let r = rng() * total;
   for (let i = 0; i < items.length; i++) {
     r -= weights[i];
     if (r <= 0) return items[i];
@@ -198,14 +200,14 @@ function initializeBattleState(c: Combatant) {
 }
 
 // Smart target selection that accounts for taunt, positioning, and class heuristics
-function selectBattleTarget(actor: Combatant, allies: Combatant[], enemies: Combatant[]): Combatant | null {
+function selectBattleTarget(actor: Combatant, allies: Combatant[], enemies: Combatant[], rng = Math.random): Combatant | null {
   const opponents = actor.side === 'ally' ? enemies : allies;
   const livingOpponents = opponents.filter(c => c.currentHp > 0);
   if (livingOpponents.length === 0) return null;
 
   // 1) Taunt: must target any opponent with active taunt buff
   const taunters = livingOpponents.filter(c => (c.buffs || []).some(b => b.kind === 'taunt' && (!b.expiresOnTurn || b.expiresOnTurn > 0)));
-  if (taunters.length > 0) return pickRandom(taunters);
+  if (taunters.length > 0) return pickRandom(taunters, rng);
 
   // 2) Positioning: prefer front row targets if present
   const frontOpponents = livingOpponents.filter(c => c.pos === 'FL' || c.pos === 'FR');
@@ -219,26 +221,26 @@ function selectBattleTarget(actor: Combatant, allies: Combatant[], enemies: Comb
   // Rogue/Assassin: go for lowest HP% (often backline)
   if (cls.includes('rogue') || cls.includes('assassin')) {
     const sorted = [...eligibleSecondary].sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp));
-    return sorted[0] || pickRandom(livingOpponents);
+    return sorted[0] || pickRandom(livingOpponents, rng);
   }
   // Mage: prefer lowest DEF (often backline)
   if (cls.includes('mage')) {
     const sorted = [...eligibleSecondary].sort((a, b) => a.def - b.def);
-    return sorted[0] || pickRandom(livingOpponents);
+    return sorted[0] || pickRandom(livingOpponents, rng);
   }
   // Warrior: prefer front line highest threat (highest ATK among front)
   if (cls.includes('warrior') || cls.includes('guardian') || cls.includes('tank')) {
     const pool = eligiblePrimary.length > 0 ? eligiblePrimary : livingOpponents;
     const sorted = [...pool].sort((a, b) => b.atk - a.atk);
-    return sorted[0] || pickRandom(livingOpponents);
+    return sorted[0] || pickRandom(livingOpponents, rng);
   }
 
   // Default: random among front if possible, else any
-  if (frontOpponents.length > 0) return pickRandom(frontOpponents);
-  return pickRandom(livingOpponents);
+  if (frontOpponents.length > 0) return pickRandom(frontOpponents, rng);
+  return pickRandom(livingOpponents, rng);
 }
 
-function selectTarget(targetType: string, self: Combatant, allies: Combatant[], enemies: Combatant[], context?: any): Combatant | null {
+function selectTarget(targetType: string, self: Combatant, allies: Combatant[], enemies: Combatant[], context?: any, rng = Math.random): Combatant | null {
   const living = (arr: Combatant[]) => arr.filter(c => c.currentHp > 0);
   const ownTeam = self.side === 'ally' ? allies : enemies;
   const enemyTeam = self.side === 'ally' ? enemies : allies;
@@ -254,10 +256,10 @@ function selectTarget(targetType: string, self: Combatant, allies: Combatant[], 
       return null; // Will be handled as array
     case 'random_ally':
       const livingAllies = living(ownTeam);
-      return livingAllies.length > 0 ? pickRandom(livingAllies) : null;
+      return livingAllies.length > 0 ? pickRandom(livingAllies, rng) : null;
     case 'random_enemy':
       const livingEnemies = living(enemyTeam);
-      return livingEnemies.length > 0 ? pickRandom(livingEnemies) : null;
+      return livingEnemies.length > 0 ? pickRandom(livingEnemies, rng) : null;
     case 'fastest_enemy':
       const fastestEnemies = living(enemyTeam)
         .sort((a, b) => effectiveSpeed(b) - effectiveSpeed(a));
@@ -284,7 +286,7 @@ function selectTarget(targetType: string, self: Combatant, allies: Combatant[], 
   }
 }
 
-function selectTargets(targetType: string, self: Combatant, allies: Combatant[], enemies: Combatant[], context?: any): Combatant[] {
+function selectTargets(targetType: string, self: Combatant, allies: Combatant[], enemies: Combatant[], context?: any, rng = Math.random): Combatant[] {
   const living = (arr: Combatant[]) => arr.filter(c => c.currentHp > 0);
   const ownTeam = self.side === 'ally' ? allies : enemies;
   const enemyTeam = self.side === 'ally' ? enemies : allies;
@@ -299,7 +301,7 @@ function selectTargets(targetType: string, self: Combatant, allies: Combatant[],
     case 'all':
       return living([...allies, ...enemies]);
     default:
-      const single = selectTarget(targetType, self, allies, enemies, context);
+      const single = selectTarget(targetType, self, allies, enemies, context, rng);
       return single ? [single] : [];
   }
 }
@@ -388,7 +390,11 @@ export type BattleContext = {
   gauntlet?: { id?: string; hazards?: any[]; affinities?: any[] };
 };
 
-export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], maxTurns = 18, ctx: BattleContext = {}): BattleOutcome {
+export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], maxTurns = 18, ctx: BattleContext = {}, seed?: string): BattleOutcome {
+  // Create seeded RNG for deterministic battles
+  const battleSeed = seed || `${Date.now()}-${Math.random()}`;
+  const rng = seedrandom(battleSeed);
+  
   // Work on local copies
   const allies = alliesIn.map(cloneCombatant);
   const enemies = enemiesIn.map(cloneCombatant);
@@ -400,20 +406,29 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
 
   // Apply OnBattleStart: shrine, structured passives, codex fallback, then hazards
   applyShrineBonuses(allies, ctx.shrine);
-  applyStructuredOnBattleStart(allies, enemies);
-  applyOnBattleStartCodex(allies, enemies);
+  applyStructuredOnBattleStart(allies, enemies, rng);
+  applyOnBattleStartCodex(allies, enemies, rng);
   applyGauntletHazards(allies, enemies, ctx.gauntlet);
 
   // Simple turn order: sort by effective speed each round among living
   let turn = 0;
   while (!isBattleOver(allies, enemies) && turn < maxTurns) {
     turn++;
-    const order = [...living(allies), ...living(enemies)].sort((a, b) => effectiveSpeed(b) - effectiveSpeed(a));
+    // Deterministic speed ordering with tie-breaker alternation per round to avoid bias
+    const order = [...living(allies), ...living(enemies)].sort((a, b) => {
+      const sb = effectiveSpeed(b);
+      const sa = effectiveSpeed(a);
+      if (sb !== sa) return sb - sa;
+      // Alternate stable order per round when speeds tie to avoid permanent initiative bias
+      return (turn % 2 === 0)
+        ? a.id.localeCompare(b.id)
+        : b.id.localeCompare(a.id);
+    });
     for (const actor of order) {
       if (actor.currentHp <= 0) continue; // actor died earlier in same round
       const opponents = actor.side === "ally" ? living(enemies) : living(allies);
       if (opponents.length === 0) break;
-      const target = selectBattleTarget(actor, allies, enemies) || pickRandom(opponents);
+      const target = selectBattleTarget(actor, allies, enemies, rng) || pickRandom(opponents, rng);
 
       // Turn-start effects (poison/bleed ticks on actor; sleep/stun skip)
       const skip = handleOnTurnStart(actor, turn, allies, enemies);
@@ -440,10 +455,13 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
       applyStructuredOnTurnStart(actor, allies, enemies, turn);
 
       // Pre-attack adjustments (buffs/debuffs)
-      const atkMult = 1 + (sumBuffPct(actor, 'attack_up') + sumBuffPct(actor, 'all_stats_up') - sumDebuffPct(actor, 'attack_down') - sumDebuffPct(actor, 'all_stats_down'));
-      const defMult = 1 + (sumBuffPct(target, 'defense_up') + sumBuffPct(target, 'all_stats_up') - sumDebuffPct(target, 'defense_down') - sumDebuffPct(target, 'all_stats_down'));
-      const effectiveAtk = Math.round(actor.atk * Math.max(0.5, atkMult));
-      const effectiveDef = Math.round(target.def * Math.max(0.5, defMult));
+      const atkMultRaw = 1 + (sumBuffPct(actor, 'attack_up') + sumBuffPct(actor, 'all_stats_up') - sumDebuffPct(actor, 'attack_down') - sumDebuffPct(actor, 'all_stats_down'));
+      const defMultRaw = 1 + (sumBuffPct(target, 'defense_up') + sumBuffPct(target, 'all_stats_up') - sumDebuffPct(target, 'defense_down') - sumDebuffPct(target, 'all_stats_down'));
+      const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+      const atkMult = clamp(atkMultRaw, 0.5, 2.0);
+      const defMult = clamp(defMultRaw, 0.5, 2.0);
+      const effectiveAtk = Math.round(actor.atk * atkMult);
+      const effectiveDef = Math.round(target.def * defMult);
 
       // Positional mitigation: backline is slightly safer until frontline falls
       const frontlineAlive = (actor.side === 'ally' ? enemies : allies).some(c => (c.pos === 'FL' || c.pos === 'FR') && c.currentHp > 0);
@@ -451,23 +469,40 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
       const positionMitigation = frontlineAlive && targetIsBackline ? 0.9 : 1.0; // 10% mitigation for backline while frontline stands
 
       const base = Math.max(1, Math.round((effectiveAtk - Math.floor(effectiveDef * 0.5)) * positionMitigation));
-      const variance = 0.85 + Math.random() * 0.3; // ±15%
+      const variance = 0.85 + rng() * 0.3; // ±15%
       let dmg = Math.max(1, Math.round(base * variance));
       
-      // Critical hit calculation
-      const targetSleeping = hasDebuff(target, 'sleep');
-      const baseCritChance = 0.12;
-      const critChanceBonus = sumBuffPct(actor, 'crit_chance_up');
-      const totalCritChance = Math.min(0.95, baseCritChance + critChanceBonus);
-      let crit = targetSleeping || Math.random() < totalCritChance;
-      if (crit) dmg = Math.round(dmg * 1.8);
+      // Hit chance calculation (dodge/accuracy mechanics)
+      const baseHitChance = 1.0; // 100% base hit chance
+      const dodgeBonus = sumBuffPct(target, 'dodge_up');
+      const accuracyBonus = sumBuffPct(actor, 'accuracy_up');
+      const finalHitChance = Math.max(0.05, Math.min(0.95, baseHitChance - dodgeBonus + accuracyBonus));
+      
+      const hit = rng() < finalHitChance;
+      let crit = false; // Declare crit in proper scope
+      if (!hit) {
+        dmg = 0; // Attack missed
+      } else {
+        // Critical hit calculation
+        const targetSleeping = hasDebuff(target, 'sleep');
+        const baseCritChance = 0.12;
+        const critChanceBonus = sumBuffPct(actor, 'crit_chance_up');
+        const totalCritChance = Math.min(0.95, baseCritChance + critChanceBonus);
+        crit = targetSleeping || rng() < totalCritChance;
+        if (crit) dmg = Math.round(dmg * 1.8);
+      }
       
       // Apply structured passive damage modifiers and on-hit effects
-      const hitResult = applyStructuredOnHit(actor, target, allies, enemies, dmg);
+      const hitResult = applyStructuredOnHit(actor, target, allies, enemies, dmg, rng);
       dmg += hitResult.extraDamage;
 
       // Apply structured OnBeingAttacked effects
-      dmg = applyStructuredOnBeingAttacked(actor, target, allies, enemies, dmg);
+      dmg = applyStructuredOnBeingAttacked(actor, target, allies, enemies, dmg, rng);
+      
+      // Check for invulnerability buff
+      if (hasBuff(target, 'invulnerable')) {
+        dmg = 0;
+      }
       
       // Apply damage
       target.currentHp = Math.max(0, target.currentHp - dmg);
@@ -501,7 +536,7 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
       handleLegacyOnBeingAttacked(actor, target);
 
       // Legacy status application from passives
-      maybeApplyOnAttackStatus(actor, target, turn);
+      maybeApplyOnAttackStatus(actor, target, turn, rng);
 
       // Legacy threshold-based triggers
       handleHpThresholdTriggers(actor, target);
@@ -552,8 +587,35 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
     }
   }
 
-  // Decide winner
-  const winner: "ally" | "enemy" = living(allies).length > 0 ? "ally" : "enemy";
+  // Decide winner with deterministic tie-breakers if maxTurns reached with survivors
+  let winner: "ally" | "enemy";
+  const alliesAlive = living(allies).length;
+  const enemiesAlive = living(enemies).length;
+  if (alliesAlive === 0 && enemiesAlive > 0) winner = "enemy";
+  else if (enemiesAlive === 0 && alliesAlive > 0) winner = "ally";
+  else {
+    // Tie-breakers: 1) more units alive 2) higher total %HP 3) higher total raw HP 4) default ally
+    if (alliesAlive !== enemiesAlive) {
+      winner = alliesAlive > enemiesAlive ? "ally" : "enemy";
+    } else {
+      const sumPct = (team: Combatant[]) => {
+        const live = living(team);
+        if (live.length === 0) return 0;
+        return live.reduce((s, c) => s + (c.currentHp / Math.max(1, c.maxHp)), 0);
+      };
+      const allyPct = sumPct(allies);
+      const enemyPct = sumPct(enemies);
+      if (allyPct !== enemyPct) {
+        winner = allyPct > enemyPct ? "ally" : "enemy";
+      } else {
+        const sumHp = (team: Combatant[]) => living(team).reduce((s, c) => s + c.currentHp, 0);
+        const allyHp = sumHp(allies);
+        const enemyHp = sumHp(enemies);
+        if (allyHp !== enemyHp) winner = allyHp > enemyHp ? "ally" : "enemy";
+        else winner = "ally"; // final deterministic fallback
+      }
+    }
+  }
   let mvpId = Object.entries(damageById).sort((a, b) => b[1] - a[1])[0]?.[0] || (living(allies)[0]?.id || living(enemies)[0]?.id);
   const all = [...allies, ...enemies];
   const mvp = all.find(c => c.id === mvpId) || all[0];
@@ -564,6 +626,7 @@ export function simulateBattle(alliesIn: Combatant[], enemiesIn: Combatant[], ma
     mvpName: mvp?.name || "Hero",
     mvpSide: mvp?.side || winner,
     timeline,
+    seed: battleSeed,
   };
 }
 
@@ -579,7 +642,7 @@ export function renderHpPanel(allies: Combatant[], enemies: Combatant[]): string
 
 // ===== Structured Passive Implementation =====
 
-function applyStructuredOnBattleStart(allies: Combatant[], enemies: Combatant[]) {
+function applyStructuredOnBattleStart(allies: Combatant[], enemies: Combatant[], rng = Math.random) {
   const characters: Character[] = require("../../data/allgodschars.json");
   const lookup = new Map<string, Character>();
   characters.forEach(ch => lookup.set(ch.slug, ch));
@@ -595,19 +658,19 @@ function applyStructuredOnBattleStart(allies: Combatant[], enemies: Combatant[])
     
     switch (passive.type) {
       case 'Aura':
-        handleAuraPassive(combatant, params, allies, enemies);
+        handleAuraPassive(combatant, params, allies, enemies, rng);
         break;
       case 'ApplyEffectOnBattleStart':
-        handleApplyEffectOnBattleStart(combatant, params, allies, enemies);
+        handleApplyEffectOnBattleStart(combatant, params, allies, enemies, rng);
         break;
       case 'TeamBuff':
-        handleTeamBuff(combatant, params, allies, enemies);
+        handleTeamBuff(combatant, params, allies, enemies, rng);
         break;
       case 'SelfBuff':
-        handleSelfBuff(combatant, params, allies, enemies);
+        handleSelfBuff(combatant, params, allies, enemies, rng);
         break;
       case 'Resistance':
-        handleResistance(combatant, params, allies, enemies);
+        handleResistance(combatant, params, allies, enemies, rng);
         break;
     }
   }
@@ -637,7 +700,7 @@ function applyStructuredOnTurnStart(actor: Combatant, allies: Combatant[], enemi
   }
 }
 
-function applyStructuredOnHit(attacker: Combatant, target: Combatant, allies: Combatant[], enemies: Combatant[], damage: number): { extraDamage: number; cleaveTargets: Combatant[] } {
+function applyStructuredOnHit(attacker: Combatant, target: Combatant, allies: Combatant[], enemies: Combatant[], damage: number, rng = Math.random): { extraDamage: number; cleaveTargets: Combatant[] } {
   const characters: Character[] = require("../../data/allgodschars.json");
   const character = characters.find(ch => ch.slug === attacker.slug);
   if (!character?.passive || !['S', 'A'].includes(attacker.rarity)) {
@@ -651,7 +714,7 @@ function applyStructuredOnHit(attacker: Combatant, target: Combatant, allies: Co
   
   switch (passive.type) {
     case 'OnHitEffect':
-      const result = handleOnHitEffect(attacker, target, params, allies, enemies, damage);
+      const result = handleOnHitEffect(attacker, target, params, allies, enemies, damage, rng);
       extraDamage = result.extraDamage;
       cleaveTargets = result.cleaveTargets;
       break;
@@ -665,7 +728,7 @@ function applyStructuredOnHit(attacker: Combatant, target: Combatant, allies: Co
   return { extraDamage, cleaveTargets };
 }
 
-function applyStructuredOnBeingAttacked(attacker: Combatant, target: Combatant, allies: Combatant[], enemies: Combatant[], damage: number): number {
+function applyStructuredOnBeingAttacked(attacker: Combatant, target: Combatant, allies: Combatant[], enemies: Combatant[], damage: number, rng = Math.random): number {
   const characters: Character[] = require("../../data/allgodschars.json");
   const character = characters.find(ch => ch.slug === target.slug);
   if (!character?.passive || !['S', 'A'].includes(target.rarity)) return damage;
@@ -675,9 +738,9 @@ function applyStructuredOnBeingAttacked(attacker: Combatant, target: Combatant, 
   
   switch (passive.type) {
     case 'OnBeingAttacked':
-      return handleOnBeingAttacked(attacker, target, params, allies, enemies, damage);
+      return handleOnBeingAttacked(attacker, target, params, allies, enemies, damage, rng);
     case 'Resistance':
-      return handleResistanceDamage(attacker, target, params, damage);
+      return handleResistanceDamage(attacker, target, params, damage, rng);
   }
   
   return damage;
@@ -741,6 +804,9 @@ function applyStructuredOnAllyDefeat(defeated: Combatant, allies: Combatant[], e
 function attemptSelfRevive(combatant: Combatant, allies: Combatant[], enemies: Combatant[]): boolean {
   if (combatant.battleState?.revivedOnce) return false;
   
+  // Check for no_revive debuff
+  if (hasDebuff(combatant, 'no_revive')) return false;
+  
   const characters: Character[] = require("../../data/allgodschars.json");
   const character = characters.find(ch => ch.slug === combatant.slug);
   if (!character?.passive || !['S', 'A'].includes(combatant.rarity)) return false;
@@ -783,9 +849,9 @@ function checkHealthThresholds(combatant: Combatant, allies: Combatant[], enemie
 
 // ===== Individual Passive Type Handlers =====
 
-function handleAuraPassive(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[]) {
+function handleAuraPassive(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], rng = Math.random) {
   if (params.ally_buff) {
-    const targets = selectTargets('allies', self, allies, enemies);
+    const targets = selectTargets('allies', self, allies, enemies, undefined, rng);
     targets.forEach(target => {
       if (!params.ally_buff.condition || matchesCondition(target, params.ally_buff.condition)) {
         if (params.ally_buff.type === 'HealOverTime') {
@@ -798,7 +864,7 @@ function handleAuraPassive(self: Combatant, params: any, allies: Combatant[], en
   }
   
   if (params.enemy_debuff) {
-    const targets = selectTargets('enemies', self, allies, enemies);
+    const targets = selectTargets('enemies', self, allies, enemies, undefined, rng);
     targets.forEach(target => {
       if (!params.enemy_debuff.condition || matchesCondition(target, params.enemy_debuff.condition)) {
         applyDebuffToTarget(target, params.enemy_debuff.debuff, params.enemy_debuff.valuePct, params.enemy_debuff.durationTurns, self.id);
@@ -807,14 +873,14 @@ function handleAuraPassive(self: Combatant, params: any, allies: Combatant[], en
   }
 }
 
-function handleApplyEffectOnBattleStart(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[]) {
-  const targets = selectTargets(params.target || 'allies', self, allies, enemies);
+function handleApplyEffectOnBattleStart(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], rng = Math.random) {
+  const targets = selectTargets(params.target || 'allies', self, allies, enemies, undefined, rng);
   
   if (params.buff) {
     targets.forEach(target => {
       if (params.buff === 'random') {
         const randomBuffs = ['attack_up', 'defense_up', 'speed_up', 'crit_chance_up'];
-        const buffType = pickRandom(randomBuffs);
+        const buffType = pickRandom(randomBuffs, rng);
         applyBuffToTarget(target, buffType, 0.2, 3, self.id);
       } else {
         applyBuffToTarget(target, params.buff.type, params.buff.valuePct, params.buff.durationTurns, self.id);
@@ -826,7 +892,7 @@ function handleApplyEffectOnBattleStart(self: Combatant, params: any, allies: Co
     targets.forEach(target => {
       if (params.debuff === 'random') {
         const randomDebuffs = ['attack_down', 'defense_down', 'speed_down', 'accuracy_down'];
-        const debuffType = pickRandom(randomDebuffs);
+        const debuffType = pickRandom(randomDebuffs, rng);
         applyDebuffToTarget(target, debuffType, 0.15, 3, self.id);
       } else {
         applyDebuffToTarget(target, params.debuff.type, params.debuff.valuePct, params.debuff.durationTurns, self.id);
@@ -834,21 +900,21 @@ function handleApplyEffectOnBattleStart(self: Combatant, params: any, allies: Co
     });
   }
   
-  // Handle special targets (Norns)
-  if (params.target2 && params.debuff) {
-    const secondTargets = selectTargets(params.target2, self, allies, enemies);
-    secondTargets.forEach(target => {
-      if (params.debuff === 'random') {
-        const randomDebuffs = ['attack_down', 'defense_down', 'speed_down', 'accuracy_down'];
-        const debuffType = pickRandom(randomDebuffs);
-        applyDebuffToTarget(target, debuffType, 0.15, 3, self.id);
-      }
-    });
-  }
+      // Handle special targets (Norns)
+    if (params.target2 && params.debuff) {
+      const secondTargets = selectTargets(params.target2, self, allies, enemies, undefined, rng);
+      secondTargets.forEach(target => {
+        if (params.debuff === 'random') {
+          const randomDebuffs = ['attack_down', 'defense_down', 'speed_down', 'accuracy_down'];
+          const debuffType = pickRandom(randomDebuffs, rng);
+          applyDebuffToTarget(target, debuffType, 0.15, 3, self.id);
+        }
+      });
+    }
 }
 
-function handleTeamBuff(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[]) {
-  const targets = selectTargets('allies', self, allies, enemies);
+function handleTeamBuff(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], rng = Math.random) {
+  const targets = selectTargets('allies', self, allies, enemies, undefined, rng);
   targets.forEach(target => {
     if (!params.condition || matchesCondition(target, params.condition)) {
       applyStatBuff(target, params.stat, params.valuePct, self.id);
@@ -856,15 +922,15 @@ function handleTeamBuff(self: Combatant, params: any, allies: Combatant[], enemi
   });
 }
 
-function handleSelfBuff(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[]) {
+function handleSelfBuff(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], rng = Math.random) {
   if (params.condition && !matchesConditionAdvanced(self, params.condition, allies, enemies)) {
     return;
   }
   applyStatBuff(self, params.stat, params.valuePct, self.id);
 }
 
-function handleResistance(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[]) {
-  const targets = params.target === 'team' ? selectTargets('allies', self, allies, enemies) : [self];
+function handleResistance(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], rng = Math.random) {
+  const targets = params.target === 'team' ? selectTargets('allies', self, allies, enemies, undefined, rng) : [self];
   
   targets.forEach(target => {
     if (!target.resistances) target.resistances = { debuffs: 0, elements: {}, statusEffects: {} };
@@ -891,7 +957,7 @@ function handleResistance(self: Combatant, params: any, allies: Combatant[], ene
   });
 }
 
-function handleOnTurnStartPassive(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], turn: number) {
+function handleOnTurnStartPassive(self: Combatant, params: any, allies: Combatant[], enemies: Combatant[], turn: number, rng = Math.random) {
   if (params.effect === 'ReduceDebuffDuration') {
     const targets = selectTargets('allies', self, allies, enemies);
     targets.forEach(target => {
@@ -908,7 +974,7 @@ function handleOnTurnStartPassive(self: Combatant, params: any, allies: Combatan
     if (target) {
       applyBuffToTarget(target, params.buff, params.valuePct || 1, params.durationTurns || 1, self.id);
     }
-  } else if (params.chancePct && Math.random() < params.chancePct) {
+  } else if (params.chancePct && rng() < params.chancePct) {
     if (params.effect === 'ApplyDebuff') {
       const target = selectTarget(params.target || 'fastest_enemy', self, allies, enemies);
       if (target) {
@@ -918,12 +984,12 @@ function handleOnTurnStartPassive(self: Combatant, params: any, allies: Combatan
   }
 }
 
-function handleOnHitEffect(attacker: Combatant, target: Combatant, params: any, allies: Combatant[], enemies: Combatant[], damage: number): { extraDamage: number; cleaveTargets: Combatant[] } {
+function handleOnHitEffect(attacker: Combatant, target: Combatant, params: any, allies: Combatant[], enemies: Combatant[], damage: number, rng = Math.random): { extraDamage: number; cleaveTargets: Combatant[] } {
   let extraDamage = 0;
   let cleaveTargets: Combatant[] = [];
   
   const chance = params.chancePct || 1.0;
-  if (Math.random() > chance) return { extraDamage, cleaveTargets };
+  if (rng() > chance) return { extraDamage, cleaveTargets };
   
   if (params.debuff) {
     applyDebuffToTarget(target, params.debuff, params.valuePct, params.durationTurns, attacker.id);
@@ -931,7 +997,7 @@ function handleOnHitEffect(attacker: Combatant, target: Combatant, params: any, 
     const enemyTeam = attacker.side === 'ally' ? enemies : allies;
     const livingEnemies = enemyTeam.filter(e => e.currentHp > 0 && e.id !== target.id);
     if (livingEnemies.length > 0) {
-      cleaveTargets = [pickRandom(livingEnemies)];
+      cleaveTargets = [pickRandom(livingEnemies, rng)];
     }
   } else if (params.effect === 'ApplyDebuff') {
     applyDebuffToTarget(target, params.debuff, params.valuePct, params.durationTurns, attacker.id);
@@ -940,7 +1006,7 @@ function handleOnHitEffect(attacker: Combatant, target: Combatant, params: any, 
   return { extraDamage, cleaveTargets };
 }
 
-function handleOnBeingAttacked(attacker: Combatant, target: Combatant, params: any, allies: Combatant[], enemies: Combatant[], damage: number): number {
+function handleOnBeingAttacked(attacker: Combatant, target: Combatant, params: any, allies: Combatant[], enemies: Combatant[], damage: number, rng = Math.random): number {
   let finalDamage = damage;
   
   if (params.debuff && Array.isArray(params.debuff)) {
@@ -950,7 +1016,7 @@ function handleOnBeingAttacked(attacker: Combatant, target: Combatant, params: a
     });
   } else if (params.debuff) {
     const chance = params.chancePct || 1.0;
-    if (Math.random() < chance) {
+    if (rng() < chance) {
       applyDebuffToTarget(attacker, params.debuff, params.valuePct, params.durationTurns, target.id);
     }
   }
@@ -959,9 +1025,9 @@ function handleOnBeingAttacked(attacker: Combatant, target: Combatant, params: a
   return finalDamage;
 }
 
-function handleResistanceDamage(attacker: Combatant, target: Combatant, params: any, damage: number): number {
+function handleResistanceDamage(attacker: Combatant, target: Combatant, params: any, damage: number, rng = Math.random): number {
   if (params.resist === 'Physical' && attacker.element === 'Physical') {
-    if (Math.random() < params.chancePct) {
+    if (rng() < params.chancePct) {
       return 0; // Dodged
     }
   }
@@ -1001,6 +1067,8 @@ function handleOnEnemyDefeat(victor: Combatant, defeated: Combatant, params: any
 
 function handleOnAllyDefeat(ally: Combatant, defeated: Combatant, params: any, allies: Combatant[], enemies: Combatant[]): boolean {
   if (params.effect === 'CheatDeath' && !defeated.battleState?.revivedOnce) {
+    // Check for no_revive debuff
+    if (hasDebuff(defeated, 'no_revive')) return false;
     const key = `cheat_death_${ally.id}`;
     if (params.once_per_battle && ally.battleState?.oncePerBattleUsed?.has(key)) {
       return false;
@@ -1127,15 +1195,15 @@ function applyBuffToTarget(target: Combatant, buffType: string, valuePct: number
   });
 }
 
-function applyDebuffToTarget(target: Combatant, debuffType: string, valuePct?: number, duration?: number, sourceId?: string, permanent?: boolean) {
+function applyDebuffToTarget(target: Combatant, debuffType: string, valuePct?: number, duration?: number, sourceId?: string, permanent?: boolean, rng = Math.random) {
   target.debuffs = target.debuffs || [];
   
   // Check resistance
   if (target.resistances) {
-    if (target.resistances.debuffs && Math.random() < target.resistances.debuffs) {
+    if (target.resistances.debuffs && rng() < target.resistances.debuffs) {
       return; // Resisted
     }
-    if (target.resistances.statusEffects?.[debuffType] && Math.random() < target.resistances.statusEffects[debuffType]) {
+    if (target.resistances.statusEffects?.[debuffType] && rng() < target.resistances.statusEffects[debuffType]) {
       return; // Resisted
     }
   }
@@ -1167,6 +1235,10 @@ function matchesConditionAdvanced(combatant: Combatant, condition: any, allies: 
 
 function hasDebuff(c: Combatant, kind: Debuff["kind"]): boolean {
   return (c.debuffs || []).some(d => d.kind === kind && (!d.expiresOnTurn || d.expiresOnTurn > 0));
+}
+
+function hasBuff(c: Combatant, kind: Buff["kind"]): boolean {
+  return (c.buffs || []).some(b => b.kind === kind && (!b.expiresOnTurn || b.expiresOnTurn > 0));
 }
 
 function sumBuffPct(c: Combatant, kind: Buff["kind"]): number {
@@ -1239,7 +1311,7 @@ function applyShrineBonuses(allies: Combatant[], shrine?: { alignment?: string; 
 }
 
 // Legacy Codex: parse character ability metadata for OnBattleStart hooks (B/C tier only)
-function applyOnBattleStartCodex(allies: Combatant[], enemies: Combatant[]) {
+function applyOnBattleStartCodex(allies: Combatant[], enemies: Combatant[], rng = Math.random) {
   const characters: Character[] = require("../../data/allgodschars.json");
   const codex = require("../config/ability_codex.json");
   const lookup = new Map<string, Character>();
@@ -1386,6 +1458,19 @@ function handleOnTurnStart(actor: Combatant, turn: number, allies: Combatant[], 
     actor.debuffs = actor.debuffs.filter(d => !d.expiresOnTurn || d.expiresOnTurn > 0);
   }
   
+  // Apply heal over time buffs
+  let totalHot = 0;
+  (actor.buffs || []).forEach(b => {
+    if (b.kind === 'heal_over_time') {
+      const heal = Math.max(1, Math.round(actor.maxHp * (b.valuePct || 0.05)));
+      totalHot += heal;
+    }
+    if (b.expiresOnTurn) b.expiresOnTurn -= 1;
+  });
+  if (totalHot > 0) {
+    actor.currentHp = Math.min(actor.maxHp, actor.currentHp + totalHot);
+  }
+  
   // Clean up expired buffs
   if (actor.buffs) {
     actor.buffs = actor.buffs.filter(b => !b.expiresOnTurn || b.expiresOnTurn > 0);
@@ -1429,7 +1514,7 @@ function handleLegacyOnBeingAttacked(attacker: Combatant, target: Combatant) {
   }
 }
 
-function maybeApplyOnAttackStatus(attacker: Combatant, target: Combatant, turn: number) {
+function maybeApplyOnAttackStatus(attacker: Combatant, target: Combatant, turn: number, rng = Math.random) {
   if (['S', 'A'].includes(attacker.rarity)) return; // Skip S/A tier, they use structured passives
   
   const characters: Character[] = require("../../data/allgodschars.json");
@@ -1443,7 +1528,7 @@ function maybeApplyOnAttackStatus(attacker: Combatant, target: Combatant, turn: 
     if (passive.includes(String(rule.match).toLowerCase())) {
       const eff = rule.effect;
       if (eff.type === 'ApplyDebuffChance') {
-        if (Math.random() < Number(eff.chance || 0)) {
+        if (rng() < Number(eff.chance || 0)) {
           applyDebuffToTarget(target, eff.debuff, eff.valuePct, Number(eff.durationTurns || 0), attacker.id);
         }
       }

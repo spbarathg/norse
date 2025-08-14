@@ -13,6 +13,11 @@ router.get("/health", (_req, res) => {
 });
 
 router.post("/drop", async (req, res) => {
+  // Security: Only allow drop endpoint in development
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: "endpoint_disabled_in_production" });
+  }
+  
   try {
     const userId = (req.headers["x-bot-user-id"] as string) || req.body.userId;
     if (!userId) return res.status(400).json({ error: "missing userId" });

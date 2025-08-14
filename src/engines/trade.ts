@@ -358,6 +358,8 @@ export async function acceptTradeOffer(tradeOfferId: string, accepterUserId: str
       },
     });
   });
+  // Analytics log
+  try { await (getPrisma() as any).analyticsEvent.create({ data: { type: 'trade_completed', userId: accepterUserId, payload: JSON.stringify({ tradeOfferId }) } }); } catch {}
 }
 
 // Cancel a trade offer

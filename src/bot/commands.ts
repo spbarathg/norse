@@ -233,6 +233,7 @@ export const commandBuilders = [
   // Removed old collection alias; inventory is the single entry point
   // Removed separate view/balance; use /relic view and /profile
   new SlashCommandBuilder().setName("daily").setDescription("Claim your daily reward"),
+  new SlashCommandBuilder().setName("quests").setDescription("View and claim your daily/weekly quests"),
   // Removed separate inspect; handled via /profile
   new SlashCommandBuilder()
     .setName("lookup")
@@ -358,6 +359,26 @@ export const commandBuilders = [
         )
     ),
   new SlashCommandBuilder()
+    .setName("battle")
+    .setDescription("⚔️ Start a battle against AI opponents")
+    .addIntegerOption(option => 
+      option.setName("difficulty")
+        .setDescription("🎯 Battle intensity")
+        .setRequired(false)
+        .addChoices(
+          { name: "😊 Novice (Level 1)", value: 1 },
+          { name: "🙂 Apprentice (Level 2)", value: 2 },
+          { name: "😐 Veteran (Level 3)", value: 3 },
+          { name: "😤 Expert (Level 4)", value: 4 },
+          { name: "😈 Legendary (Level 5)", value: 5 }
+        )
+    )
+    .addBooleanOption(option =>
+      option.setName("detailed")
+        .setDescription("📊 Show detailed battle information")
+        .setRequired(false)
+    ),
+  new SlashCommandBuilder()
     .setName("gauntlet")
     .setDescription("🏁 Face challenging gauntlet scenarios with unique hazards")
     .addSubcommand(subcommand =>
@@ -401,6 +422,10 @@ export const commandBuilders = [
   new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("Show community leaderboards"),
+  new SlashCommandBuilder()
+    .setName("replay")
+    .setDescription("View a battle replay")
+    .addStringOption(o => o.setName('battle_id').setDescription('Battle ID').setRequired(true)),
   new SlashCommandBuilder()
     .setName("trade")
     .setDescription("Trading operations")
@@ -480,6 +505,22 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       const isPrivate = interaction.options.getBoolean("private") ?? false;
       await interaction.deferReply({ ephemeral: isPrivate });
 
+      // Simple rate limit: max 20 pulls/minute, 1 pull/2s per user
+      try {
+        const prisma = getPrisma();
+        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+        const mats = JSON.parse(user.materials || '{}');
+        const nowTs = Date.now();
+        const pulls: number[] = (mats.pullTimestamps || []).filter((t: number) => nowTs - t < 60_000);
+        if (pulls.length >= 20 || (pulls.length > 0 && nowTs - pulls[pulls.length - 1] < 2000)) {
+          await interaction.editReply({ content: '⏳ You are pulling too fast. Please wait a moment.', embeds: [], components: [] });
+          return;
+        }
+        pulls.push(nowTs);
+        mats.pullTimestamps = pulls;
+        await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify(mats) } });
+      } catch {}
+
       // Use unified gacha path with reveal to ensure duplicate conversion
       const baseUrl = process.env.CDN_BASE_URL || "http://localhost:3000/cdn";
       const backUrl = `${baseUrl}/portraits/odin.png`;
@@ -487,7 +528,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       await interaction.editReply({ embeds: [back] });
       await new Promise((r) => setTimeout(r, 1500));
 
-      const result = await performGacha({ userId, era });
+      const result = await performGacha({ userId, era, bannerId: 'standard' });
 
       const embed = new EmbedBuilder()
         .setTitle(result.embed.title)
@@ -504,6 +545,15 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
         );
 
       await interaction.editReply({ embeds: [embed], components: [actionRow] });
+      try {
+        // Quest progress: pull
+        const prisma = getPrisma();
+        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+        const mats = JSON.parse(user.materials || '{}');
+        const q = mats.quests || {};
+        if (q.q_pull_3) q.q_pull_3.progress = Math.min((q.q_pull_3.progress || 0) + 1, q.q_pull_3.target || 3);
+        await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, quests: q }) } });
+      } catch {}
       try { await checkAndNotifyAchievements(interaction, userId); } catch {}
       return;
     }
@@ -676,6 +726,40 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       return;
     }
 
+    if (interaction.commandName === "quests") {
+      await interaction.deferReply();
+      const prisma = getPrisma();
+      const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+      const mats = JSON.parse(user.materials || '{}');
+      const now = new Date();
+      const todayKey = now.toDateString();
+      const q = mats.quests || {};
+      // Simple daily/weekly quests
+      const ensure = (key: string, name: string, target: number) => {
+        if (!q[key] || q[key].date !== todayKey) q[key] = { date: todayKey, name, progress: 0, target, claimed: false };
+      };
+      ensure('q_pull_3', 'Perform 3 pulls', 3);
+      ensure('q_upgrade_1', 'Upgrade 1 relic', 1);
+      ensure('q_lookup_1', 'View 1 character', 1);
+      // Weekly example keyed by ISO week
+      const jan1 = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+      const dayMs = 24 * 3600 * 1000;
+      const days = Math.floor((Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - jan1.getTime()) / dayMs) + 1;
+      const week = Math.ceil((days + jan1.getUTCDay()) / 7);
+      const weekKey = `${now.getUTCFullYear()}-W${week}`;
+      if (!q['w_gauntlet_3'] || q['w_gauntlet_3'].week !== weekKey) q['w_gauntlet_3'] = { week: weekKey, name: 'Complete 3 gauntlets', progress: 0, target: 3, claimed: false };
+      await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, quests: q }) } });
+      const embed = new EmbedBuilder().setTitle('🗒️ Quests').setColor(0x58D68D).setTimestamp();
+      const lines: string[] = [];
+      const fmt = (it: any) => `• ${it.name}: ${Math.min(it.progress, it.target)}/${it.target} ${it.claimed ? '✅' : ''}`;
+      for (const key of ['q_pull_3', 'q_upgrade_1', 'q_lookup_1']) lines.push(fmt(q[key]));
+      lines.push('');
+      lines.push(`Weekly — ${fmt(q['w_gauntlet_3'])}`);
+      embed.setDescription(lines.join('\n'));
+      await interaction.editReply({ embeds: [embed] });
+      return;
+    }
+
     // Inspect removed; handled by /profile
 
     if (interaction.commandName === "lookup") {
@@ -734,6 +818,14 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
           .setColor(0x2ECC71)
           .setTimestamp();
         await interaction.editReply({ embeds: [embed] });
+        try {
+          const prisma = getPrisma();
+          const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+          const mats = JSON.parse(user.materials || '{}');
+          const q = mats.quests || {};
+          if (q.q_upgrade_1) q.q_upgrade_1.progress = Math.min((q.q_upgrade_1.progress || 0) + 1, q.q_upgrade_1.target || 1);
+          await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, quests: q }) } });
+        } catch {}
         return;
       }
     }
@@ -798,6 +890,14 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
         .setColor(0x2ECC71)
         .setTimestamp();
       await interaction.editReply({ embeds: [embed] });
+      try {
+        const prisma = getPrisma();
+        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+        const mats = JSON.parse(user.materials || '{}');
+        const q = mats.quests || {};
+        if (q.q_upgrade_1) q.q_upgrade_1.progress = Math.min((q.q_upgrade_1.progress || 0) + 1, q.q_upgrade_1.target || 1);
+        await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, quests: q }) } });
+      } catch {}
       return;
       }
       if (sub === 'view') {
@@ -837,6 +937,22 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       await interaction.deferReply();
       const embedAndComponents = await getLeaderboardsEmbed({ scope: "weekly", board: "richest" }, userId);
       await interaction.editReply(embedAndComponents);
+      return;
+    }
+
+    if (interaction.commandName === 'replay') {
+      await interaction.deferReply({ ephemeral: true });
+      const battleId = interaction.options.getString('battle_id', true);
+      const prisma = getPrisma();
+      const rec = await (prisma as any).battleRecord.findUnique({ where: { battleId } });
+      if (!rec) { await interaction.editReply('Replay not found.'); return; }
+      const { buildSummaryEmbed, buildHighlightsEmbed, buildReplayEmbed, buildReplayControls, rateLimitReplay } = await import('../engines/presenter.js');
+      if (!rateLimitReplay(userId)) { await interaction.editReply('You are requesting replays too fast. Please wait.'); return; }
+      const summary = buildSummaryEmbed(rec);
+      const highlights = buildHighlightsEmbed(rec);
+      const { embed, index, last } = buildReplayEmbed(rec, 0);
+      const controls = buildReplayControls(battleId, index, last);
+      await interaction.editReply({ embeds: [summary, highlights, embed], components: [controls] });
       return;
     }
 
@@ -917,6 +1033,11 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       if (sub === 'effigy') return void (await handleShrineEffigy(interaction));
       if (sub === 'clear') return void (await handleShrineClear(interaction));
       return;
+    }
+
+    if (interaction.commandName === "battle") {
+      const { handleBattleCommand } = await import("./battleHandlers.js");
+      return void (await handleBattleCommand(interaction));
     }
 
     if (interaction.commandName === "gauntlet") {
@@ -1113,7 +1234,7 @@ async function showCollectionPage(
   // Add relic fields in vertical format with spacing
   pageItems.forEach(({ relic, char }, index) => {
     const rarityEmoji = getRarityEmoji(relic.rarity);
-    const icon = char ? (emojiMap[char.slug] || '🔹') : '🔹';
+    const icon = char ? (emojiMap[char.slug] || '⭐') : '⭐';
     embed.addFields({
       name: `${icon} ${rarityEmoji} **\`${relic.id}\`**`,
       value: `${char ? char.name + ' • ' : ''}${getRarityName(relic.rarity)} • ${relic.durabilityPct.toFixed(1)}% HP • ${relic.evolutionStage} • ${relic.xp.toLocaleString()} XP`,
@@ -1434,7 +1555,7 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         const back = new EmbedBuilder().setTitle("🎴 Pulling...").setDescription("Revealing your card...").setImage(backUrl).setColor(0x2c3e50);
         await interaction.editReply({ embeds: [back], components: [] });
         await new Promise((r) => setTimeout(r, 1500));
-        const result = await performGacha({ userId });
+        const result = await performGacha({ userId, bannerId: 'standard' });
         const embed = new EmbedBuilder().setTitle(result.embed.title).setDescription(result.embed.description).setColor(getRarityColor(result.rarity)).setTimestamp();
         if ((result.embed as any).fields) embed.addFields((result.embed as any).fields as any);
         if ((result.embed as any).image) embed.setImage((result.embed as any).image.url);
@@ -1443,6 +1564,14 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
           new ButtonBuilder().setCustomId('view_collection').setLabel('📚 My Collection').setStyle(ButtonStyle.Secondary)
         );
         await interaction.editReply({ embeds: [embed], components: [actionRow] });
+        try {
+          const prisma = getPrisma();
+          const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+          const mats = JSON.parse(user.materials || '{}');
+          const q = mats.quests || {};
+          if (q.q_pull_3) q.q_pull_3.progress = Math.min((q.q_pull_3.progress || 0) + 1, q.q_pull_3.target || 3);
+          await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, quests: q }) } });
+        } catch {}
         return;
       }
 
@@ -1569,14 +1698,21 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
 
       // Character detail selection from lookup
       if (customId === 'lookup_select') {
-        const isSelect = (interaction as any).isStringSelectMenu && (interaction as any).isStringSelectMenu();
-        const value = isSelect ? (interaction as any).values?.[0] : undefined;
+        const value = (interaction as any).values?.[0];
         if (value && value.startsWith('lookup_view_')) {
           const slug = value.replace('lookup_view_', '');
-          // Defer update immediately to avoid 10062 when Discord invalidates the token quickly
+          // Acknowledge quickly to avoid expired/unknown interaction, then edit the message
           await interaction.deferUpdate();
-          const embed = buildCharacterDetailsEmbed(slug);
-          await (interaction.message as any).edit({ embeds: [embed], components: [] });
+          await showCharacterDetails(interaction, slug);
+          // Quest progress: lookup viewed
+          try {
+            const prisma = getPrisma();
+            const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+            const mats = JSON.parse(user.materials || '{}');
+            const q = mats.quests || {};
+            if (q.q_lookup_1) q.q_lookup_1.progress = Math.min((q.q_lookup_1.progress || 0) + 1, q.q_lookup_1.target || 1);
+            await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, quests: q }) } });
+          } catch {}
           return;
         }
       }
@@ -1682,6 +1818,27 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         const page = parseInt(parts[2]);
         await interaction.deferUpdate();
         await handleBrowseMarket(interaction, page, null);
+        return;
+      }
+
+      // Replay navigation
+      if (customId.startsWith('replay_')) {
+        const parts = customId.split('_');
+        const action = parts[1];
+        const battleId = parts[2];
+        const index = parseInt(parts[3] || '0', 10) || 0;
+        const prisma = getPrisma();
+        const rec = await (prisma as any).battleRecord.findUnique({ where: { battleId } });
+        if (!rec) { await interaction.reply({ content: 'Replay not found.', ephemeral: true }); return; }
+        const { buildReplayEmbed, buildReplayControls, buildReplayFile } = await import('../engines/presenter.js');
+        if (action === 'dl') {
+          const file = buildReplayFile(rec);
+          await interaction.reply({ files: [file], ephemeral: true });
+          return;
+        }
+        const { embed, index: i, last } = buildReplayEmbed(rec, index);
+        const controls = buildReplayControls(battleId, i, last);
+        await interaction.update({ embeds: [embed], components: [controls] });
         return;
       }
 

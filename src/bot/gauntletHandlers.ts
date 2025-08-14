@@ -234,7 +234,10 @@ export async function handleGauntletStart(interaction: ChatInputCommandInteracti
     gauntlet: selectedGauntlet
   };
 
-  const outcome = simulateBattle(allies, enemies, 18, battleContext);
+  // Generate battle seed for deterministic replay
+  const battleSeed = `gauntlet-${interaction.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  
+  const outcome = simulateBattle(allies, enemies, 18, battleContext, battleSeed);
 
   // Enhanced gauntlet victory screen
   await showGauntletResults(

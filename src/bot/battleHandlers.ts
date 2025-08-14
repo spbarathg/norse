@@ -128,8 +128,47 @@ export async function handleBattleCommand(interaction: ChatInputCommandInteracti
   const shrine = await getUserShrine(userId, prisma);
   const battleContext = { shrine };
   
+  // Generate battle seed for deterministic replay
+  const battleSeed = `${interaction.id}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  
   // Simulate battle
-  const outcome = simulateBattle(allies, enemies, 18, battleContext);
+  const outcome = simulateBattle(allies, enemies, 18, battleContext, battleSeed);
+  // Persist a compact BattleRecord for replay/presenter
+  try {
+    const battleId = `${interaction.id}`;
+    const summary = {
+      winner: outcome.winner,
+      turns: outcome.turns,
+      mvpName: outcome.mvpName,
+      mvpSide: outcome.mvpSide
+    } as any;
+    const record = {
+      battleId,
+      mode: 'gauntlet',
+      difficulty: String(difficulty),
+      seed: battleSeed,
+      engineVersion: 'v1',
+      rulesVersion: 'r1',
+      ownerUserId: userId,
+      guildId: interaction.guildId || null,
+      channelId: interaction.channelId || null,
+      startedAt: new Date(Date.now() - 1500),
+      endedAt: new Date(),
+      winner: outcome.winner,
+      turnCount: outcome.turns,
+      summaryJson: JSON.stringify(summary),
+      timelineJson: JSON.stringify(outcome.timeline.map(t => ({
+        turnNumber: t.turn,
+        actorId: t.actorId,
+        targetId: t.targetId,
+        crit: t.crit,
+        damage: t.damage,
+        defeatedTarget: t.defeatedTarget,
+        log: t.log
+      })))
+    };
+    await prisma.battleRecord.create({ data: record as any });
+  } catch (e) { console.warn('BattleRecord persist failed', (e as any).message); }
   const turns = outcome.timeline;
 
   // Enhanced combat stage with interactive elements
@@ -305,7 +344,7 @@ async function showVictoryScreen(
   prisma: any
 ) {
   const winnerSide = outcome.winner;
-  const mvp = outcome.mvp;
+  const mvp = { id: [...allies, ...enemies][0]?.id, name: outcome.mvpName, damageDealt: 0, damageTaken: 0 } as any;
   const isVictory = winnerSide === "ally";
   const difficultyEmojis = ['😊', '🙂', '😐', '😤', '😈'];
   const difficultyNames = ['novice', 'apprentice', 'veteran', 'expert', 'legendary'];
@@ -391,6 +430,24 @@ async function showVictoryScreen(
     );
   
   await interaction.editReply({ embeds: [victoryEmbed], components: [postBattleRow] });
+  // SVP loss coach (Second‑Voice Perspective) for defeats
+  if (!isVictory) {
+    const svp = new EmbedBuilder()
+      .setTitle('🧭 SVP: Lessons from the Field')
+      .setColor(Colors.Yellow)
+      .setDescription('Your backline may have taken heavy pressure early, and control effects likely swung momentum.')
+      .addFields(
+        { name: 'Try this', value: '🏛️ Set alignment to Greco-Roman for ATK/SPD bonuses.', inline: true },
+        { name: 'Positioning', value: '↕️ Move lowest-HP unit to BL/BR for mitigation.', inline: true },
+        { name: 'Power-up', value: '✨ Upgrade your frontline to Level 3 for more HP/DEF.', inline: true }
+      )
+      .setFooter({ text: 'Tap a button below to adjust and retry.' });
+    const svpRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+      new ButtonBuilder().setCustomId('svp_rematch_def').setLabel('🔄 Auto‑Rematch (Defensive)').setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId('shrine_view').setLabel('🏛️ Open Shrine').setStyle(ButtonStyle.Secondary)
+    );
+    await interaction.followUp({ embeds: [svp], components: [svpRow] });
+  }
   
   // Award rewards to user
   try {

@@ -1,20 +1,27 @@
-# Norse – Living Relics Discord Bot
+# Norse — Mythology Card RPG for Discord
 
-## Status: Active, feature-complete MVP
+Status: actively developed (Phase 2 complete — unified gacha, upgrades, customization, quests)
 
-This repository contains a Discord bot and REST API for a collectible "Living Relics" game. It includes relic drops, missions, trading, a basic marketplace, decay, in‑game time, and public Discord embeds. This README reflects the current codebase.
+This repository contains a modern Discord game where players collect mythic characters as “Relics,” upgrade and customize them, battle in gauntlets, run missions, trade with others, and flex their collection — all with clean, public embeds.
 
-## Features
+## Feature Set (current)
 
-- **Relic Drops**: Deterministic RNG per user+nonce; rarity tiers S/A/B/C; premium relic IDs (e.g., `E1ZE3K`).
-- **Collections**: Public collection pages with pagination and quick actions; global relic viewer by ID.
-- **Missions**: Start, complete (job), and claim rewards; relic locking during missions; rewards grant gold/materials/xp.
-- **Economy**: User gold and materials stored per account; public balance display; daily reward with 7‑day streak bonuses.
-- **Marketplace (basic)**: List and buy relics for gold via slash commands and REST API.
-- **Player Trading (offers)**: Create direct/open/counter trade offers including relics, gold, and materials; accept/cancel; public browse and history.
-- **Decay**: Hourly durability decay with rarity/era modifiers; evolution stage updates; history logging.
-- **In‑game Time**: Configurable clock used for timestamps and eras.
-- **Public Embeds**: All command replies are public (non‑ephemeral) and use clean embeds and components.
+- **Unified Gacha (pull)**: `/pull` rolls a character with reveal animation. If the player already owns it, the duplicate is auto‑converted to Mythic Essence (C 10, B 50, A 200, S 500). Premium human‑readable IDs.
+  - Banners supported with tuned rates and soft pity (small A/S boosts the longer you go without them).
+  - Pull rate limit: max 20/min, and 1/2s per user.
+- **Collections & Profile**: `/inventory` with pagination/sorting, quick actions; `/profile` shows currencies (Gold, Gacha Coins, Mythic Essence), collection count, featured relic, achievements, missions/trades stats.
+- **Upgrades**: `/relic upgrade [relic_id]` spends Mythic Essence — cost = 25 × nextLevel²; stats per level: HP +5, ATK +3, DEF +2.
+- **Customization**: `/relic customize [relic_id] [style]` unlocks/apply art styles (default unlock cost 100 Essence); stores `activeArtStyle` + `unlockedStyles`.
+- **Missions**: `/missions start|claim` — timed jobs with relic locks; claim gold/materials rewards.
+- **Combat/Gauntlets**: `/gauntlet browse|start` — turn‑based engine with start‑of‑battle shrine/gauntlet effects, speed‑ordered turns, buffs/debuffs (stun/sleep/freeze, DOTs), on‑hit and defeat triggers, positional mitigation, hazards and affinities. Returns timeline + MVP.
+- **Shrine (Team)**: `/shrine view|setup|set|align|effigy|clear` — formation, pantheon alignment, effigies, and team bonuses.
+- **Marketplace**: `/market list|buy|browse` — list relics, buy, and browse publicly.
+- **Trading**: `/trade offer|list|view|accept|cancel|history` — direct/open/counter offers; atomic swaps; history.
+- **Daily & Quests**: `/daily` grants Gacha Coins (24h cooldown). `/quests` shows daily (pull 3, upgrade 1, lookup 1) and weekly (gauntlet 3) — progress auto‑tracked.
+- **Lookup**: `/lookup` character database with select‑to‑view details and portrait; back‑to‑list.
+- **Leaderboards**: `/leaderboard` richest, collectors, missions with selector.
+- **Analytics**: `AnalyticsEvent` table for lightweight telemetry (leaderboard views, achievements checks; extensible).
+- **Public Embeds**: All messages are public by design to promote social play.
 
 ## Quick Start
 
@@ -41,36 +48,28 @@ Environment variables in `.env`:
 - `TIME_SCALE` (default `3600`)
 - `IG_EPOCH_REAL_ISO` (default `2025-01-01T00:00:00Z`)
 - `CDN_BASE_URL` (default `http://localhost:3000/cdn`)
+ - `DAILY_GACHA_COINS` (default `10`)
+ - `CARD_MAX_LEVEL` (default `10`)
+ - `STYLE_UNLOCK_ESSENCE` (default `100`)
 
 ## Discord Commands
 
-- `/drop` — Summon a new relic with rarity and character; shows action buttons.
-- `/missions start mission_id relic_ids` — Start mission with comma‑separated relic IDs.
-- `/missions claim mission_id` — Claim rewards after job completion.
-- `/market list relic_id price` — List a relic for sale.
-- `/market buy listing_id` — Buy a market listing.
-- `/collection [page]` — View your relic collection.
-- `/view relic_id` — Public view of any relic by ID.
-- `/balance` — Show your gold and materials with quick actions.
-- `/daily` — Claim daily rewards with streaks and bonuses.
-- `/profile [player] [page]` — Show a player profile with a collection pane.
-- `/lookup [search] [page]` — Browse all characters; search by name/pantheon/class/element. Sorted by rarity.
-- `/trade offer [player] [message]` — Create a trade offer (open if no player).
-- `/trade list [type]` — View sent/received/open/all trades.
-- `/trade view trade_id` — View trade details.
-- `/trade accept trade_id` — Accept a trade.
-- `/trade cancel trade_id` — Cancel a trade (initiator/target).
-- `/trade history [page]` — View your completed trade history.
-- `/browse trades|market [page]` — Browse open trades or market listings.
+- Core: `pull`, `inventory`, `profile`, `daily`, `quests`, `lookup`, `leaderboard`
+- Relic: `relic view`, `relic upgrade`, `relic customize`
+- Missions: `missions start`, `missions claim`
+- Shrine: `shrine view|setup|set|align|effigy|clear`
+- Market: `market list|buy|browse`
+- Trade: `trade offer|list|view|accept|cancel|history`
+- Gauntlet: `gauntlet browse|start`
 
 Notes:
 - Replies are public; embeds are viewable by everyone in channel.
 - IDs: Relics use premium IDs; `generateRelicId` ensures uniqueness.
 
-## REST API
+## REST API (subset)
 
 - `GET /api/health` — Healthcheck.
-- `POST /api/drop` — Body: `{ userId, nonce? }` or header `x-bot-user-id`; returns relic info and embed.
+- `POST /api/drop` — Uses the unified gacha flow (duplicate‑to‑essence) for consistency.
 - `GET /api/relics/:id` — Get relic by ID.
 - Missions: `POST /api/missions/start`, `/complete`, `/claim`.
 - Decay: `POST /api/decay/tick` — Runs decay tick over unlocked relics.
@@ -94,7 +93,8 @@ Notes:
 - Characters: `data/allgodschars.json` (used for drops, lookup, and embeds).
 - Eras: `src/config/eras.json` (seeded to DB via `prisma/seed.ts`).
 - Missions: `src/config/missions.json`.
-- Portraits: `public/portraits/*.png` served under `/cdn/portraits/<slug>.png`.
+- Portraits: `public/portraits/*.png` served under `/cdn/portraits/<slug>.png` (details view attaches local asset in dev to avoid caching).
+- Frame previews: `npm run preview-frames` (uses `sharp`) with margins/fit/position/offset flags; outputs to `public/previews`.
 
 ## Architecture
 
@@ -102,8 +102,18 @@ Notes:
 - API: Express router under `/api` with modular subrouters for market and trade.
 - Persistence: SQLite via Prisma; JSON stored as strings where appropriate for SQLite.
 - Time: `TIME_SCALE` and `IG_EPOCH_REAL_ISO` control in‑game timestamp formatting.
-- Decay: Batch updates unlocked relics; rarity and era modifiers; write history entries.
+- Decay: Batch updates unlocked relics; rarity and era modifiers; write history entries. (Available; not central to Phase 2.)
 - Trading: Validations for ownership/locks/balances; atomic DB transactions; history log.
+
+## Combat Overview
+
+- Turn‑based simulator with clear phases:
+  - OnBattleStart: shrine bonuses, structured passives, codex fallback, gauntlet hazards
+  - Turn order by effective SPD each round; incapacitation checks (stun/sleep/freeze)
+  - Pre‑attack buff/debuff math; positional mitigation for backline
+  - On‑hit and on‑being‑attacked effects (cleave, DOT application, lifesteal, resistance)
+  - Defeat triggers (revive, team auras) and structured on‑enemy/ally defeat hooks
+  - End when a team is wiped or turn cap reached; returns winner + timeline + MVP
 
 ## Design Notes
 
@@ -114,9 +124,9 @@ Notes:
 
 ## Housekeeping
 
-- Only this README is kept as project documentation. All other docs have been removed.
-- Unused dependencies: `bullmq` is present but not used in code; `redis` helper exists but is not referenced.
-- Overlays: README no longer references non‑existent overlays folder.
+- Public, non‑ephemeral UX; social flex and clean navigation in every embed.
+- Deterministic RNG and premium relic IDs for memorable sharing.
+- JSON‑backed flexible fields for SQLite (materials/currencies/history/metadata).
 
 ## Production Tips
 

@@ -9,6 +9,7 @@ export async function getLeaderboardsEmbed(
   viewerUserId: string
 ) {
   const prisma = getPrisma();
+  try { await prisma.analyticsEvent.create({ data: { type: 'leaderboard_view', userId: viewerUserId, payload: JSON.stringify(params) } }); } catch {}
   const color = 0xC9A227;
   const embed = new EmbedBuilder().setColor(color).setTimestamp();
 

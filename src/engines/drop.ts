@@ -14,11 +14,12 @@ try {
 }
 const eras: any[] = require("../config/eras.json");
 
+// Default banner rarity weights; overridable by banner config
 const RARITY_WEIGHTS: Record<string, number> = {
-  S: 0.005,  // 0.5% (1 in 200) - Ultra Legendary
-  A: 0.025,  // 2.5% (1 in 40) - Legendary  
-  B: 0.17,   // 17% - Rare
-  C: 0.8,    // 80% - Common
+  S: 0.005,
+  A: 0.025,
+  B: 0.17,
+  C: 0.8,
 };
 
 const DropInput = z.object({
@@ -147,15 +148,29 @@ export async function performDrop(input: DropInput): Promise<DropResult> {
 } 
 
 // Gacha that converts duplicates to Mythic Essence instead of creating another copy
-export async function performGacha(input: DropInput): Promise<GachaResult> {
-  const { userId, era = "all", nonce = Date.now().toString() } = DropInput.parse(input);
+export async function performGacha(input: DropInput & { bannerId?: string }): Promise<GachaResult> {
+  const { userId, era = "all", nonce = Date.now().toString(), bannerId } = input as any;
   const seed = `${userId}:${nonce}`;
   const rng = seedrandom(seed);
 
-  const rarity = weightedRoll(rng, RARITY_WEIGHTS);
-  const character = pickCharacterByEra(rng, rarity, era);
-
+  // Optional banner config with pity
   const prisma = getPrisma();
+  const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+  const mats = JSON.parse(user.materials || '{}');
+  const pity = mats.pity || { pullsSinceA: 0, pullsSinceS: 0 };
+  let weights = { ...RARITY_WEIGHTS };
+  if (bannerId) {
+    // Example: small boost to A/S and pity softcaps
+    weights = { S: 0.008, A: 0.04, B: 0.17, C: 0.782 };
+  }
+  // Soft pity: if many pulls without A/S, gently increase odds
+  const pityBoostA = Math.min(0.04, (pity.pullsSinceA || 0) * 0.0005);
+  const pityBoostS = Math.min(0.01, (pity.pullsSinceS || 0) * 0.0002);
+  weights.A += pityBoostA; weights.C -= pityBoostA;
+  weights.S += pityBoostS; weights.B -= pityBoostS;
+
+  const rarity = weightedRoll(rng, weights);
+  const character = pickCharacterByEra(rng, rarity, era);
 
   // Check if user already owns a relic for this character
   const existing = await prisma.relic.findFirst({ where: { ownerUserId: userId, characterId: character.id } });
@@ -190,11 +205,18 @@ export async function performGacha(input: DropInput): Promise<GachaResult> {
       image: baseUrl ? { url: imageUrl } : undefined,
     };
 
+    // update pity counters
+    pity.pullsSinceA += 1; pity.pullsSinceS += 1;
+    await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, pity }) } });
     return { isDuplicate: true, awardedEssence: essence, rarity, characterId: character.id, embed };
   }
 
   // Not a duplicate: create new relic (same as performDrop but minimal fields here)
   const result = await performDrop({ userId, era, nonce });
+  // reset pity for landed rarity
+  pity.pullsSinceA = rarity === 'A' || rarity === 'S' ? 0 : pity.pullsSinceA + 1;
+  pity.pullsSinceS = rarity === 'S' ? 0 : pity.pullsSinceS + 1;
+  await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify({ ...mats, pity }) } });
   const embed = {
     title: `New — ${characters.find((c:any)=>c.id===result.characterId)?.name || 'Character'}`,
     description: `Added to your collection!`,

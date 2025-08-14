@@ -25,6 +25,7 @@ export async function getUserAchievements(userId: string): Promise<AchievementFl
 
 export async function checkAndNotifyAchievements(interaction: AnyInteraction, userId: string): Promise<void> {
   const prisma = getPrisma();
+  try { await (prisma as any).analyticsEvent.create({ data: { type: 'achievements_check', userId, payload: JSON.stringify({ at: Date.now() }) } }); } catch {}
   const user = await prisma.user.upsert({
     where: { userId },
     create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) },

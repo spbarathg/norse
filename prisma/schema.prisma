@@ -97,6 +97,40 @@ model Event {
   status        String
 }
 
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  ts        DateTime @default(now())
+  userId    String?
+  type      String
+  payload   String   // JSON as String for SQLite
+  @@index([userId])
+  @@index([type])
+  @@index([ts])
+}
+
+model BattleRecord {
+  id            String   @id @default(cuid())
+  battleId      String   @unique
+  mode          String
+  difficulty    String
+  seed          String
+  engineVersion String
+  rulesVersion  String
+  ownerUserId   String
+  guildId       String?
+  channelId     String?
+  startedAt     DateTime
+  endedAt       DateTime
+  winner        String
+  turnCount     Int
+  summaryJson   String   // compact summary (MVP, top moments)
+  timelineJson  String   // compact timeline array
+  createdAt     DateTime @default(now())
+
+  @@index([ownerUserId])
+  @@index([createdAt])
+}
+
 model TradeOffer {
   id               String   @id @default(cuid())
   initiatorUserId  String
