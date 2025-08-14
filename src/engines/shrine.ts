@@ -11,7 +11,7 @@ export type ShrineData = {
 };
 
 export async function getUserShrine(userId: string, prisma = getPrisma()): Promise<ShrineData> {
-  const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+  const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
   const mats = JSON.parse(user.materials || '{}');
   const shrine = (mats.shrine || {}) as ShrineData;
   shrine.layout = shrine.layout || {};

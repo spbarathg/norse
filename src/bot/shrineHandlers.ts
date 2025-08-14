@@ -36,7 +36,7 @@ async function saveShrine(userId: string, mutate: (s: ShrineData) => void) {
   const prisma = getPrisma();
   const user = await prisma.user.upsert({ 
     where: { userId }, 
-    create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, 
+    create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, 
     update: {} 
   });
   const mats = JSON.parse(user.materials || '{}');
@@ -54,7 +54,7 @@ export async function handleShrineView(interaction: ChatInputCommandInteraction)
   const userId = interaction.user.id;
   const user = await prisma.user.upsert({ 
     where: { userId }, 
-    create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, 
+    create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, 
     update: {} 
   });
   

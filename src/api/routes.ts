@@ -1,5 +1,5 @@
 import express from "express";
-import { performDrop } from "../engines/drop.js";
+import { performGacha } from "../engines/drop.js";
 import { getPrisma } from "../lib/db.js";
 import { marketRouter } from "./market.js";
 import { tradeRouter } from "./trade.js";
@@ -16,7 +16,7 @@ router.post("/drop", async (req, res) => {
   try {
     const userId = (req.headers["x-bot-user-id"] as string) || req.body.userId;
     if (!userId) return res.status(400).json({ error: "missing userId" });
-    const result = await performDrop({ userId, nonce: req.body.nonce });
+    const result = await performGacha({ userId, nonce: req.body.nonce });
     res.json({
       id: result.relicId,
       character_id: result.characterId,

@@ -55,6 +55,8 @@ model User {
   discordId  String  @unique
   gold       Int     @default(0)
   materials  String  @default("{}") // JSON as String for SQLite
+  currencies String  @default("{}") // JSON as String: { gacha_coins, mythic_essence, ... }
+  lastDailyClaimAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }

@@ -150,7 +150,7 @@ export async function claimMission(ownerUserId: string, missionId: string) {
     // credit gold and materials
     const user = await (tx as any).user.upsert({
       where: { userId: ownerUserId },
-      create: { userId: ownerUserId, discordId: ownerUserId, gold: 0, materials: JSON.stringify({}) },
+      create: { userId: ownerUserId, discordId: ownerUserId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) },
       update: {},
     });
 

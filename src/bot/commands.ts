@@ -21,7 +21,7 @@ import {
 import path from "path";
 import fs from "fs";
 import { AttachmentBuilder } from "discord.js";
-import { performDrop } from "../engines/drop.js";
+import { performDrop, performGacha } from "../engines/drop.js";
 import { startMission, claimMission } from "../engines/missions.js";
 import { getPrisma } from "../lib/db.js";
 import { 
@@ -147,8 +147,8 @@ export async function handleAutocomplete(interaction: AutocompleteInteraction) {
 
 export const commandBuilders = [
   new SlashCommandBuilder()
-    .setName("drop")
-    .setDescription("🎲 Summon a random mythological character to your collection")
+    .setName("pull")
+    .setDescription("🎴 Pull a card; duplicates convert to Mythic Essence")
     .addStringOption(option => 
       option.setName("era")
         .setDescription("🏛️ Choose which pantheon to summon from")
@@ -210,7 +210,7 @@ export const commandBuilders = [
         .addIntegerOption((o) => o.setName("page").setDescription("Page number").setRequired(false))
     ),
   new SlashCommandBuilder()
-    .setName("collection")
+    .setName("inventory")
     .setDescription("View your relics")
     .addIntegerOption((o) => o.setName("page").setDescription("Page").setRequired(false))
     .addStringOption((o) =>
@@ -230,11 +230,8 @@ export const commandBuilders = [
           { name: "Worst (Battle)", value: "worst" }
         )
     ),
-  new SlashCommandBuilder()
-    .setName("view")
-    .setDescription("View a relic")
-    .addStringOption((o) => o.setName("relic_id").setDescription("Relic ID").setRequired(true)),
-  new SlashCommandBuilder().setName("balance").setDescription("View your gold and materials"),
+  // Removed old collection alias; inventory is the single entry point
+  // Removed separate view/balance; use /relic view and /profile
   new SlashCommandBuilder().setName("daily").setDescription("Claim your daily reward"),
   // Removed separate inspect; handled via /profile
   new SlashCommandBuilder()
@@ -246,13 +243,22 @@ export const commandBuilders = [
     .setName("relic")
     .setDescription("Relic management")
     .addSubcommand(s => s
-      .setName("levelup")
-      .setDescription("Spend XP and Gold to level up a relic")
+      .setName("view")
+      .setDescription("View a relic")
       .addStringOption(o => o.setName("relic_id").setDescription("Relic ID").setRequired(true))
+    )
+    .addSubcommand(s => s
+      .setName("upgrade")
+      .setDescription("Spend Mythic Essence to level up a relic")
+      .addStringOption(o => o.setName("relic_id").setDescription("Relic ID").setRequired(true))
+    )
+    .addSubcommand(s => s
+      .setName("customize")
+      .setDescription("Unlock or apply an alternate art style")
+      .addStringOption(o => o.setName("relic_id").setDescription("Relic ID").setRequired(true))
+      .addStringOption(o => o.setName("style").setDescription("Art style id").setRequired(true))
     ),
-  new SlashCommandBuilder()
-    .setName("nexus")
-    .setDescription("Open the Town Square hub"),
+  // Removed nexus hub to reduce command surface
   new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Show a player profile and collection")
@@ -396,26 +402,6 @@ export const commandBuilders = [
     .setName("leaderboard")
     .setDescription("Show community leaderboards"),
   new SlashCommandBuilder()
-    .setName("battle")
-    .setDescription("⚔️ Challenge enemies in epic turn-based combat")
-    .addIntegerOption(option => 
-      option.setName("difficulty")
-        .setDescription("🎯 Battle difficulty level")
-        .setRequired(false)
-        .addChoices(
-          { name: "😊 Novice (Level 1)", value: 1 },
-          { name: "🙂 Apprentice (Level 2)", value: 2 },
-          { name: "😐 Veteran (Level 3)", value: 3 },
-          { name: "😤 Expert (Level 4)", value: 4 },
-          { name: "😈 Legendary (Level 5)", value: 5 }
-        )
-    )
-    .addBooleanOption(option =>
-      option.setName("detailed")
-        .setDescription("📊 Show detailed battle statistics")
-        .setRequired(false)
-    ),
-  new SlashCommandBuilder()
     .setName("trade")
     .setDescription("Trading operations")
     .addSubcommand((s) =>
@@ -489,50 +475,40 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
   const userId = interaction.user.id;
 
   try {
-    if (interaction.commandName === "drop") {
+    if (interaction.commandName === "pull") {
       const era = interaction.options.getString("era") || "all";
       const isPrivate = interaction.options.getBoolean("private") ?? false;
       await interaction.deferReply({ ephemeral: isPrivate });
-      const result = await performDrop({ userId, era });
-      
-      // Clean, minimalistic drop embed
-      const dropEmbed = new EmbedBuilder()
-        .setTitle(`✨ ${result.embed.title}`)
-        .setDescription(`${result.embed.description}`)
-        .addFields(result.embed.fields)
-        .setColor(getRarityColor(result.rarity))
-        .setTimestamp()
-        .setFooter({ text: result.relicId });
-      
-      if (result.embed.image) {
-        dropEmbed.setImage(result.embed.image.url);
-      }
 
-      // Quick action buttons
+      // Use unified gacha path with reveal to ensure duplicate conversion
+      const baseUrl = process.env.CDN_BASE_URL || "http://localhost:3000/cdn";
+      const backUrl = `${baseUrl}/portraits/odin.png`;
+      const back = new EmbedBuilder().setTitle("🎴 Summoning...").setDescription("Revealing your card...").setImage(backUrl).setColor(0x2c3e50);
+      await interaction.editReply({ embeds: [back] });
+      await new Promise((r) => setTimeout(r, 1500));
+
+      const result = await performGacha({ userId, era });
+
+      const embed = new EmbedBuilder()
+        .setTitle(result.embed.title)
+        .setDescription(result.embed.description)
+        .setColor(getRarityColor(result.rarity))
+        .setTimestamp();
+      if ((result.embed as any).fields) embed.addFields((result.embed as any).fields as any);
+      if ((result.embed as any).image) embed.setImage((result.embed as any).image.url);
+
       const actionRow = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
-          new ButtonBuilder()
-            .setCustomId(`view_relic_${result.relicId}`)
-            .setLabel('📋 View Details')
-            .setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder()
-            .setCustomId('drop_another')
-            .setLabel('🎲 Drop Another')
-            .setStyle(ButtonStyle.Primary),
-          new ButtonBuilder()
-            .setCustomId('view_collection')
-            .setLabel('📚 My Collection')
-            .setStyle(ButtonStyle.Secondary)
+          new ButtonBuilder().setCustomId('drop_another').setLabel('🎲 Pull Again').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('view_collection').setLabel('📚 My Collection').setStyle(ButtonStyle.Secondary)
         );
 
-      await interaction.editReply({ 
-        embeds: [dropEmbed], 
-        components: [actionRow] 
-      });
-      // Achievement checks after drop
-      try { await checkAndNotifyAchievements(interaction, userId); } catch (e) { console.warn("Achievement check failed:", (e as any).message); }
+      await interaction.editReply({ embeds: [embed], components: [actionRow] });
+      try { await checkAndNotifyAchievements(interaction, userId); } catch {}
       return;
     }
+
+    // Legacy alias path removed to reduce confusion
 
     if (interaction.commandName === "missions") {
       const sub = interaction.options.getSubcommand();
@@ -602,9 +578,9 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
         if (!listing) return interaction.editReply(`Listing not found.`);
         try {
           await prisma.$transaction(async (tx) => {
-            const buyer = await tx.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+            const buyer = await tx.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
             if (buyer.gold < listing.priceGold) throw new Error("Insufficient gold");
-            const seller = await tx.user.upsert({ where: { userId: listing.sellerUserId }, create: { userId: listing.sellerUserId, discordId: listing.sellerUserId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+            const seller = await tx.user.upsert({ where: { userId: listing.sellerUserId }, create: { userId: listing.sellerUserId, discordId: listing.sellerUserId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
             await tx.user.update({ where: { userId }, data: { gold: buyer.gold - listing.priceGold } });
             await tx.user.update({ where: { userId: seller.userId }, data: { gold: seller.gold + listing.priceGold } });
             await tx.relic.update({ where: { id: listing.relicId }, data: { ownerUserId: userId, missionLockId: null } });
@@ -641,7 +617,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       }
     }
 
-    if (interaction.commandName === "collection") {
+    if (interaction.commandName === "inventory") {
       await interaction.deferReply(); // PUBLIC - show your collection
       const page = interaction.options.getInteger("page") || 1;
       const sort = interaction.options.getString("sort") || "rarity_desc";
@@ -649,12 +625,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    if (interaction.commandName === "view") {
-      await interaction.deferReply(); // PUBLIC - everyone can see
-      const relicId = interaction.options.getString("relic_id", true);
-      await showGlobalRelicDetails(interaction, relicId);
-      return;
-    }
+    // Removed top-level view; use /relic view
 
     if (interaction.commandName === "balance") {
       await interaction.deferReply(); // PUBLIC - show your wealth
@@ -729,7 +700,7 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
           await interaction.editReply("You don't own this relic or it doesn't exist.");
           return;
         }
-        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
         // Leveling costs and scaling
         const stats = JSON.parse(relic.currentStats || "{}");
         const currentLevel = Number((relic.metadata && JSON.parse(relic.metadata || '{}').level) || 1);
@@ -767,6 +738,76 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       }
     }
 
+    if (interaction.commandName === "relic") {
+      const sub = interaction.options.getSubcommand();
+      if (sub === 'upgrade') {
+      await interaction.deferReply();
+      const relicId = interaction.options.getString("relic_id", true);
+      const prisma = getPrisma();
+      const relic = await prisma.relic.findUnique({ where: { id: relicId } });
+      if (!relic || relic.ownerUserId !== userId) {
+        await interaction.editReply("You don't own this relic or it doesn't exist.");
+        return;
+      }
+
+      const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+      const currencies = JSON.parse((user as any).currencies || '{}');
+      const currentEssence = Number(currencies.mythic_essence || 0);
+
+      const meta = relic.metadata ? JSON.parse(relic.metadata) : {};
+      const level = Number(meta.level || 1);
+      const maxLevel = Number(process.env.CARD_MAX_LEVEL || 10);
+      if (level >= maxLevel) {
+        await interaction.editReply(`This relic is already at max level (${maxLevel}).`);
+        return;
+      }
+      // Cost scaling: 25 * nextLevel^2
+      const nextLevel = level + 1;
+      const costEssence = 25 * nextLevel * nextLevel;
+      if (currentEssence < costEssence) {
+        const embed = new EmbedBuilder().setTitle("🔒 Not enough Mythic Essence").setDescription(`Requires ${costEssence} Essence.`).setColor(0xE74C3C);
+        await interaction.editReply({ embeds: [embed] });
+        return;
+      }
+
+      const baseStats = JSON.parse(relic.currentStats || '{}');
+      const inc = { hp: 5, atk: 3, def: 2, spd: 0 };
+      const newStats = {
+        hp: Number(baseStats.hp || 0) + inc.hp,
+        atk: Number(baseStats.atk || 0) + inc.atk,
+        def: Number(baseStats.def || 0) + inc.def,
+        spd: Number(baseStats.spd || 0) + inc.spd,
+      };
+      const newMeta = { ...meta, level: nextLevel };
+
+      await prisma.$transaction(async (tx) => {
+        const u = await tx.user.findUnique({ where: { userId } });
+        const cur = JSON.parse((u as any).currencies || '{}');
+        cur.mythic_essence = Number(cur.mythic_essence || 0) - costEssence;
+        await tx.user.update({ where: { userId }, data: { currencies: JSON.stringify(cur) } });
+        await tx.relic.update({ where: { id: relicId }, data: { currentStats: JSON.stringify(newStats), metadata: JSON.stringify(newMeta) } });
+      });
+
+      const embed = new EmbedBuilder()
+        .setTitle("⬆️ Card Upgraded!")
+        .setDescription(`Relic \`${relicId}\` is now Level ${nextLevel}`)
+        .addFields(
+          { name: "Cost", value: `-${costEssence} Mythic Essence`, inline: true },
+          { name: "New Stats", value: `HP ${newStats.hp}, ATK ${newStats.atk}, DEF ${newStats.def}, SPD ${newStats.spd}`, inline: true },
+        )
+        .setColor(0x2ECC71)
+        .setTimestamp();
+      await interaction.editReply({ embeds: [embed] });
+      return;
+      }
+      if (sub === 'view') {
+        await interaction.deferReply();
+        const relicId = interaction.options.getString('relic_id', true);
+        await showGlobalRelicDetails(interaction, relicId);
+        return;
+      }
+    }
+
     if (interaction.commandName === "nexus") {
       await interaction.deferReply();
       const embed = new EmbedBuilder()
@@ -799,10 +840,64 @@ export async function handleCommand(interaction: ChatInputCommandInteraction) {
       return;
     }
 
-    if (interaction.commandName === "battle") {
-      const { handleBattleCommand } = await import("./battleHandlers.js");
-      await handleBattleCommand(interaction);
+
+    if (interaction.commandName === "relic") {
+      const sub = interaction.options.getSubcommand();
+      if (sub !== 'customize') { /* handled above */ } else {
+      await interaction.deferReply();
+      const relicId = interaction.options.getString("relic_id", true);
+      const style = interaction.options.getString("style", true);
+      const prisma = getPrisma();
+      const relic = await prisma.relic.findUnique({ where: { id: relicId } });
+      if (!relic || relic.ownerUserId !== userId) {
+        await interaction.editReply("You don't own this relic or it doesn't exist.");
+        return;
+      }
+      // Load character and available styles from data; if not present, allow any string id
+      const characters = require("../../data/allgodschars.json");
+      const character = characters.find((c: any) => c.id === relic.characterId) || {};
+      const availableStyles: string[] = Array.isArray(character.art_styles) ? character.art_styles : ["default"];
+      if (!availableStyles.includes(style)) {
+        await interaction.editReply(`Style not available for this character. Available: ${availableStyles.join(', ')}`);
+        return;
+      }
+
+      // Unlock cost if not unlocked yet
+      const meta = relic.metadata ? JSON.parse(relic.metadata) : { level: 1 };
+      const unlocked: string[] = Array.isArray(meta.unlockedStyles) ? meta.unlockedStyles : ["default"];
+      const isUnlocked = unlocked.includes(style);
+      const unlockCost = Number(process.env.STYLE_UNLOCK_ESSENCE || 100);
+
+      if (!isUnlocked) {
+        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
+        const currencies = JSON.parse((user as any).currencies || '{}');
+        const essence = Number(currencies.mythic_essence || 0);
+        if (essence < unlockCost) {
+          await interaction.editReply(`Not enough Mythic Essence to unlock. Requires ${unlockCost}.`);
+          return;
+        }
+        await prisma.$transaction(async (tx) => {
+          const u = await tx.user.findUnique({ where: { userId } });
+          const cur = JSON.parse((u as any).currencies || '{}');
+          cur.mythic_essence = Number(cur.mythic_essence || 0) - unlockCost;
+          await tx.user.update({ where: { userId }, data: { currencies: JSON.stringify(cur) } });
+          const m = relic.metadata ? JSON.parse(relic.metadata) : { level: 1 };
+          const un = Array.isArray(m.unlockedStyles) ? m.unlockedStyles : ["default"];
+          if (!un.includes(style)) un.push(style);
+          m.unlockedStyles = un;
+          m.activeArtStyle = style;
+          await tx.relic.update({ where: { id: relicId }, data: { metadata: JSON.stringify(m) } });
+        });
+        await interaction.editReply(`Unlocked and applied style '${style}' to relic ${relicId}.`);
+        return;
+      }
+
+      // Already unlocked: just apply
+      meta.activeArtStyle = style;
+      await prisma.relic.update({ where: { id: relicId }, data: { metadata: JSON.stringify(meta) } });
+      await interaction.editReply(`Applied style '${style}' to relic ${relicId}.`);
       return;
+      }
     }
 
     if (interaction.commandName === "shrine") {
@@ -1143,8 +1238,9 @@ function getRarityName(rarity: string): string {
 
 async function buildUserProfileEmbed(viewUserId: string, interaction: ChatInputCommandInteraction | ButtonInteraction) {
   const prisma = getPrisma();
-  const user = await prisma.user.upsert({ where: { userId: viewUserId }, create: { userId: viewUserId, discordId: viewUserId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+  const user = await prisma.user.upsert({ where: { userId: viewUserId }, create: { userId: viewUserId, discordId: viewUserId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
   const mats = JSON.parse(user.materials || '{}');
+  const currencies = JSON.parse((user as any).currencies || '{}');
   const featuredRelicId: string | undefined = mats.featuredRelicId;
   const relic = featuredRelicId ? await prisma.relic.findUnique({ where: { id: featuredRelicId } }) : null;
 
@@ -1164,12 +1260,19 @@ async function buildUserProfileEmbed(viewUserId: string, interaction: ChatInputC
   if (achievements.master_trader) badges.push('💱');
   if (achievements.pantheon_collector_greco) badges.push('🏛️');
 
+  const totalChars = (() => { try { return require("../../data/allgodschars.json").length; } catch { return 0; } })();
+  const ownedCount = await prisma.relic.count({ where: { ownerUserId: viewUserId } });
+
   const embed = new EmbedBuilder()
     .setTitle(`${displayName} — Player Profile`)
     .setColor(0xC9A227)
     .setTimestamp()
     .addFields(
       { name: 'Joined', value: `<t:${Math.floor(user.createdAt.getTime()/1000)}:D>`, inline: true },
+      { name: 'Collection', value: `${ownedCount}/${totalChars} collected`, inline: true },
+      { name: '⠀', value: '⠀', inline: true },
+      { name: 'Gacha Coins', value: String(currencies.gacha_coins ?? 0), inline: true },
+      { name: 'Mythic Essence', value: String(currencies.mythic_essence ?? 0), inline: true },
       { name: 'Gold', value: user.gold.toLocaleString(), inline: true },
     );
 
@@ -1325,41 +1428,21 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
 
       // Drop another relic
       if (customId === 'drop_another') {
-        await interaction.deferReply(); // PUBLIC - everyone can see
-        const result = await performDrop({ userId });
-        
-        const dropEmbed = new EmbedBuilder()
-          .setTitle(`✨ ${result.embed.title}`)
-          .setDescription(result.embed.description)
-          .addFields(result.embed.fields)
-          .setColor(getRarityColor(result.rarity))
-          .setTimestamp()
-          .setFooter({ text: result.relicId });
-        
-        if (result.embed.image) {
-          dropEmbed.setImage(result.embed.image.url);
-        }
-
-        const actionRow = new ActionRowBuilder<ButtonBuilder>()
-          .addComponents(
-            new ButtonBuilder()
-              .setCustomId(`view_relic_${result.relicId}`)
-              .setLabel('📋 View Details')
-              .setStyle(ButtonStyle.Secondary),
-            new ButtonBuilder()
-              .setCustomId('drop_another')
-              .setLabel('🎲 Drop Another')
-              .setStyle(ButtonStyle.Primary),
-            new ButtonBuilder()
-              .setCustomId('view_collection')
-              .setLabel('📚 My Collection')
-              .setStyle(ButtonStyle.Secondary)
-          );
-
-        await interaction.editReply({ 
-          embeds: [dropEmbed], 
-          components: [actionRow] 
-        });
+        await interaction.deferReply();
+        const baseUrl = process.env.CDN_BASE_URL || "http://localhost:3000/cdn";
+        const backUrl = `${baseUrl}/portraits/odin.png`;
+        const back = new EmbedBuilder().setTitle("🎴 Pulling...").setDescription("Revealing your card...").setImage(backUrl).setColor(0x2c3e50);
+        await interaction.editReply({ embeds: [back], components: [] });
+        await new Promise((r) => setTimeout(r, 1500));
+        const result = await performGacha({ userId });
+        const embed = new EmbedBuilder().setTitle(result.embed.title).setDescription(result.embed.description).setColor(getRarityColor(result.rarity)).setTimestamp();
+        if ((result.embed as any).fields) embed.addFields((result.embed as any).fields as any);
+        if ((result.embed as any).image) embed.setImage((result.embed as any).image.url);
+        const actionRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+          new ButtonBuilder().setCustomId('drop_another').setLabel('🎲 Pull Again').setStyle(ButtonStyle.Primary),
+          new ButtonBuilder().setCustomId('view_collection').setLabel('📚 My Collection').setStyle(ButtonStyle.Secondary)
+        );
+        await interaction.editReply({ embeds: [embed], components: [actionRow] });
         return;
       }
 
@@ -1664,7 +1747,7 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         await interaction.deferUpdate();
         const selectedRelicId = interaction.values[0];
         const prisma = getPrisma();
-        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, update: {} });
+        const user = await prisma.user.upsert({ where: { userId }, create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, update: {} });
         const mats = JSON.parse(user.materials || '{}');
         mats.featuredRelicId = selectedRelicId;
         await prisma.user.update({ where: { userId }, data: { materials: JSON.stringify(mats) } });
@@ -1753,7 +1836,7 @@ async function handleShrineSetupModal(interaction: ModalSubmitInteraction) {
     const prisma = getPrisma();
     const user = await prisma.user.upsert({ 
       where: { userId }, 
-      create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}) }, 
+      create: { userId, discordId: userId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) }, 
       update: {} 
     });
     
@@ -1907,27 +1990,30 @@ async function handleDailyReward(interaction: ChatInputCommandInteraction, userI
       userId, 
       discordId: userId, 
       gold: 0, 
-      materials: JSON.stringify({}) 
+      materials: JSON.stringify({}),
+      currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 })
     },
     update: {}
   });
 
   const now = new Date();
-  const today = now.toDateString();
-  
-  // Daily claim tracking lives in materials to avoid false positives from other updates
-  const materials = JSON.parse(user.materials || "{}");
-  const lastClaimDate: string | undefined = materials.lastDailyClaimDate;
-  
-  if (lastClaimDate === today) {
+  const lastClaimAt: Date | null = (user as any).lastDailyClaimAt || null;
+  const canClaim = !lastClaimAt || (now.getTime() - new Date(lastClaimAt).getTime()) >= 24 * 60 * 60 * 1000;
+
+  const currencies = JSON.parse((user as any).currencies || '{}');
+  const currentCoins = Number(currencies.gacha_coins || 0);
+  const dailyCoins = Number(process.env.DAILY_GACHA_COINS || 10);
+
+  if (!canClaim) {
+    const nextAt = new Date(new Date(lastClaimAt as any).getTime() + 24 * 60 * 60 * 1000);
     const embed = new EmbedBuilder()
-      .setTitle("⏰ Daily Reward Already Claimed")
-      .setDescription("You've already claimed your daily reward today! Come back tomorrow.")
+      .setTitle("⏰ Daily Already Claimed")
+      .setDescription(`Next claim available <t:${Math.floor(nextAt.getTime()/1000)}:R>`) 
       .setColor(0x95A5A6)
       .setTimestamp()
       .addFields(
-        { name: "Next Reward", value: "Available tomorrow", inline: true },
-        { name: "Current Gold", value: user.gold.toLocaleString(), inline: true }
+        { name: "Gacha Coins", value: String(currentCoins), inline: true },
+        { name: "Mythic Essence", value: String(currencies.mythic_essence ?? 0), inline: true }
       );
 
     const actionRow = new ActionRowBuilder<ButtonBuilder>()
@@ -1935,97 +2021,42 @@ async function handleDailyReward(interaction: ChatInputCommandInteraction, userI
         new ButtonBuilder()
           .setCustomId('view_collection')
           .setLabel('📚 View Collection')
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setCustomId('drop_another')
-          .setLabel('🎲 Drop Relic')
-          .setStyle(ButtonStyle.Primary)
+          .setStyle(ButtonStyle.Secondary)
       );
 
     await interaction.editReply({ embeds: [embed], components: [actionRow] });
     return;
   }
 
-  // Calculate streak (consecutive days based on last claim)
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const wasYesterday = lastClaimDate === yesterday.toDateString();
-  
-  // Get current streak from materials or start at 1
-  let streak = wasYesterday ? (materials.streak || 1) + 1 : 1;
-  streak = Math.min(streak, 7); // Cap at 7 days
-
-  // Calculate rewards based on streak
-  const baseGold = 50;
-  const streakMultiplier = 1 + (streak - 1) * 0.2; // 20% more per day
-  const goldReward = Math.floor(baseGold * streakMultiplier);
-  
-  // Bonus materials based on streak
-  const bonusMaterials: Record<string, number> = {};
-  if (streak >= 3) bonusMaterials.wood = (bonusMaterials.wood || 0) + 2;
-  if (streak >= 5) bonusMaterials.stone = (bonusMaterials.stone || 0) + 1;
-  if (streak >= 7) bonusMaterials.pearls = (bonusMaterials.pearls || 0) + 1;
-
-  // Update user with rewards
-  const updatedMaterials = { ...materials, streak };
-  Object.entries(bonusMaterials).forEach(([key, value]) => {
-    updatedMaterials[key] = (updatedMaterials[key] || 0) + value;
-  });
-
-  updatedMaterials.lastDailyClaimDate = today;
+  const updatedCurrencies = { ...currencies, gacha_coins: currentCoins + dailyCoins };
 
   await prisma.user.update({
     where: { userId },
     data: {
-      gold: user.gold + goldReward,
-      materials: JSON.stringify(updatedMaterials)
+      currencies: JSON.stringify(updatedCurrencies),
+      lastDailyClaimAt: now
     }
   });
 
-  // Create reward embed
   const embed = new EmbedBuilder()
-    .setTitle("🎁 Daily Reward Claimed!")
-    .setDescription(`🔥 ${streak}-day streak maintained!`)
+    .setTitle("🎁 Daily Gacha Coins Claimed!")
+    .setDescription(`+${dailyCoins} Gacha Coins added.`)
     .setColor(0x2ECC71)
     .setTimestamp()
     .addFields(
-      { name: "🪙 Gold Earned", value: `+${goldReward.toLocaleString()}`, inline: true },
-      { name: "🔥 Current Streak", value: `${streak} days`, inline: true },
-      { name: "💰 Total Gold", value: (user.gold + goldReward).toLocaleString(), inline: true }
+      { name: "Gacha Coins", value: String(updatedCurrencies.gacha_coins), inline: true },
+      { name: "Mythic Essence", value: String(updatedCurrencies.mythic_essence ?? 0), inline: true }
     );
-
-  if (Object.keys(bonusMaterials).length > 0) {
-    embed.addFields({
-      name: "🎁 Bonus Materials",
-      value: Object.entries(bonusMaterials)
-        .map(([key, value]) => `+${value} ${key}`)
-        .join(', '),
-      inline: false
-    });
-  }
-
-  embed.addFields({
-    name: "⭐ Streak Bonuses",
-    value: `Day 3: +2 Wood${streak >= 3 ? ' ✅' : ''}\nDay 5: +1 Stone${streak >= 5 ? ' ✅' : ''}\nDay 7: +1 Pearl${streak >= 7 ? ' ✅' : ''}`,
-    inline: false
-  });
 
   const actionRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
-      new ButtonBuilder()
-        .setCustomId('drop_another')
-        .setLabel('🎲 Use Your Gold - Drop Relic!')
-        .setStyle(ButtonStyle.Success),
       new ButtonBuilder()
         .setCustomId('view_collection')
         .setLabel('📚 View Collection')
         .setStyle(ButtonStyle.Secondary)
     );
 
-  await interaction.editReply({ 
-    embeds: [embed], 
-    components: [actionRow] 
-  });
+  await interaction.editReply({ embeds: [embed], components: [actionRow] });
 }
 
 // Show another player's collection
@@ -2134,7 +2165,7 @@ async function showPlayerCollection(interaction: ChatInputCommandInteraction | B
   });
   // Store last view context on the message for back navigation
   try {
-    (interaction as any)._lookupCtx = { searchTerm, page };
+    (interaction as any)._lookupCtx = { page };
   } catch {}
 }
 

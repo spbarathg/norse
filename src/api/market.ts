@@ -48,14 +48,14 @@ marketRouter.post("/buy", async (req, res) => {
     await prisma.$transaction(async (tx) => {
       const buyer = await tx.user.upsert({
         where: { userId: buyerUserId },
-        create: { userId: buyerUserId, discordId: buyerUserId, gold: 0, materials: JSON.stringify({}) },
+        create: { userId: buyerUserId, discordId: buyerUserId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) },
         update: {},
       });
       if (buyer.gold < listing.priceGold) throw new Error("insufficient_gold");
 
       const seller = await tx.user.upsert({
         where: { userId: listing.sellerUserId },
-        create: { userId: listing.sellerUserId, discordId: listing.sellerUserId, gold: 0, materials: JSON.stringify({}) },
+        create: { userId: listing.sellerUserId, discordId: listing.sellerUserId, gold: 0, materials: JSON.stringify({}), currencies: JSON.stringify({ gacha_coins: 0, mythic_essence: 0 }) },
         update: {},
       });
 
