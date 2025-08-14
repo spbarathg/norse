@@ -1573,9 +1573,10 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         const value = isSelect ? (interaction as any).values?.[0] : undefined;
         if (value && value.startsWith('lookup_view_')) {
           const slug = value.replace('lookup_view_', '');
-          // Edit the original reply in-place without deferring if possible
+          // Defer update immediately to avoid 10062 when Discord invalidates the token quickly
+          await interaction.deferUpdate();
           const embed = buildCharacterDetailsEmbed(slug);
-          await interaction.update({ embeds: [embed], components: [] });
+          await (interaction.message as any).edit({ embeds: [embed], components: [] });
           return;
         }
       }
@@ -1721,6 +1722,8 @@ export async function handleComponentInteraction(interaction: ButtonInteraction 
         const value = interaction.values?.[0];
         if (value && value.startsWith('lookup_view_')) {
           const slug = value.replace('lookup_view_', '');
+          // Acknowledge quickly to avoid expired/unknown interaction, then edit the message
+          await interaction.deferUpdate();
           await showCharacterDetails(interaction, slug);
           return;
         }
@@ -2411,8 +2414,14 @@ async function showCharacterDetails(interaction: ChatInputCommandInteraction | B
   const ch = characters.find((c: any) => c.slug === slug);
   if (!ch) {
     const embed = new EmbedBuilder().setTitle('❌ Not found').setDescription(`Character '${slug}' not found`).setColor(0xE74C3C);
-    if ((interaction as any).editReply) {
-      await (interaction as any).editReply({ embeds: [embed], components: [] });
+    if ((interaction as any).deferred || (interaction as any).replied) {
+      if ((interaction as any).editReply) {
+        await (interaction as any).editReply({ embeds: [embed], components: [] });
+      } else if ((interaction as any).message?.edit) {
+        await (interaction as any).message.edit({ embeds: [embed], components: [] } as any);
+      }
+    } else if ((interaction as any).isButton?.() || (interaction as any).isStringSelectMenu?.()) {
+      await (interaction as any).update({ embeds: [embed], components: [] });
     } else {
       await (interaction as any).reply({ embeds: [embed] });
     }
@@ -2429,7 +2438,7 @@ async function showCharacterDetails(interaction: ChatInputCommandInteraction | B
       { name: 'Element', value: ch.element || '—', inline: true },
       { name: 'Stats', value: `HP ${ch.hp} • ATK ${ch.atk} • DEF ${ch.def} • SPD ${ch.spd}`, inline: false }
     );
-  // Prefer local attachment in dev to avoid Discord caching issues
+  // Prefer attaching local portrait to guarantee visibility in Discord (public message)
   try {
     const localPath = path.resolve(process.cwd(), 'public', 'portraits', `${slug}.png`);
     if (fs.existsSync(localPath)) {
@@ -2438,11 +2447,12 @@ async function showCharacterDetails(interaction: ChatInputCommandInteraction | B
       const backRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         new ButtonBuilder().setCustomId('lookup_back').setLabel('⬅️ Back to list').setStyle(ButtonStyle.Secondary)
       );
-      // Send a new message with attachment (cannot attach files when updating an existing message)
-      await (interaction as any).reply({ embeds: [embed], components: [backRow] as any, files: [attachment] });
+      // After deferUpdate, use followUp to send a new message with attachment (non-ephemeral)
+      await (interaction as any).followUp({ embeds: [embed], components: [backRow] as any, files: [attachment] });
       return;
     }
   } catch {}
+  // Fallback to CDN image if no local asset
   const portraitUrl = getPortraitUrlForSlug(slug);
   if (portraitUrl) embed.setImage(portraitUrl);
 
@@ -2458,10 +2468,16 @@ async function showCharacterDetails(interaction: ChatInputCommandInteraction | B
     new ButtonBuilder().setCustomId('lookup_back').setLabel('⬅️ Back to list').setStyle(ButtonStyle.Secondary)
   );
   const payload = { embeds: [embed], components: [backRow] as any };
-  if ((interaction as any).update) {
+  if ((interaction as any).deferred || (interaction as any).replied) {
+    if ((interaction as any).editReply) {
+      await (interaction as any).editReply(payload);
+    } else if ((interaction as any).message?.edit) {
+      await (interaction as any).message.edit(payload as any);
+    }
+  } else if ((interaction as any).isButton?.() || (interaction as any).isStringSelectMenu?.()) {
     await (interaction as any).update(payload);
-  } else if ((interaction as any).editReply) {
-    await (interaction as any).editReply(payload);
+  } else {
+    await (interaction as any).reply(payload as any);
   }
 }
 
